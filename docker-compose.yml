@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  #... other configs ...
+  database:
+    image: 'library/mongo:4.2.7'
+    container_name: 'mongodbrest'
+    environment:
+      - MONGO_INITDB_DATABASE=mongodbrest
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=adminpassword
+    ports:
+      - '27017-27019:27017-27019'
