@@ -1,7 +1,8 @@
 package service;
 
+
 import com.owlike.genson.Genson;
-import database.MongoOp;
+import database.MongoOperations;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import ressources.Course;
@@ -22,24 +23,27 @@ import java.util.List;
 public class CourseService {
     @Context
     protected UriInfo uriInfo;
-
+    protected MongoOperations courseDatabase = new MongoOperations("courses");
 
     // Get all courses in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllCoursesOrByName(@QueryParam("name") @DefaultValue("") String name) {
+        Genson builder = new Genson();
         if (name.equals("")) {
-            Genson builder = new Genson();
-            List<Document> allCoursesInDoc = MongoOp.getAll();
+
+            List<Document> allCoursesInDoc = courseDatabase.getAll();
             // Convert from a list of documents to a list of courses that can be turned to XML
             List<Course> allCourses = new ArrayList<>();
-            for(Document course : allCoursesInDoc) {
-                allCourses.add(builder.deserialize(course.toJson(), Course.class));
+            for(Document courseInDoc : allCoursesInDoc) {
+                allCourses.add(builder.deserialize(courseInDoc.toJson(), Course.class));
             }
-            System.out.println("1");
+
             return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {}).build();
         } else {
-            Document course = MongoOp.getByName(name);
+            Document courseInDoc = courseDatabase.getByName(name);
+            Course course = builder.deserialize(courseInDoc.toJson(), Course.class);
+
             return Response.ok(course).build();
         }
     }
@@ -50,10 +54,11 @@ public class CourseService {
     @Path("{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getCourseById( @PathParam("id") String id) {
-        Document foundCourse = MongoOp.getById(new ObjectId(id));
-        String foundCourseInJson = foundCourse.toJson();
+        Genson builder = new Genson();
+        Document foundCourseInDoc = courseDatabase.getById(new ObjectId(id));
+        Course course = builder.deserialize(foundCourseInDoc.toJson(), Course.class);
 
-        return Response.ok(foundCourse).build();
+        return Response.ok(course).build();
     }
 
 
@@ -64,7 +69,7 @@ public class CourseService {
         Genson builder = new Genson();
         // Serialize the course to JSON and then to Document BSON representation
         Document newCourseInDoc = Document.parse(builder.serialize(newCourse));
-        String id = MongoOp.insertInto(newCourseInDoc, newCourse.getName());
+        String id = courseDatabase.insertInto(newCourseInDoc, newCourse.getName());
 
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(id).build();
 
@@ -81,7 +86,7 @@ public class CourseService {
         // Serialize the course to JSON and then to Document BSON representation
         Document updatedCourseInDoc = Document.parse(builder.serialize(updatedCourse));
 
-        MongoOp.updateCourse(updatedCourseInDoc, new ObjectId(id));
+        courseDatabase.updateCourse(updatedCourseInDoc, new ObjectId(id));
 
         return Response.noContent().build();
     }
@@ -91,7 +96,7 @@ public class CourseService {
     @DELETE
     @Path("{id}")
     public Response deleteCourse(@PathParam ("id") String id) {
-        MongoOp.deleteCourse(new ObjectId(id));
+        courseDatabase.deleteCourse(new ObjectId(id));
 
         return Response.noContent().build();
     }

@@ -16,6 +16,7 @@ public class Start {
     private static String WEB_APP_CLASSES = "target/classes";
 
     public static void main(String[] args) throws Exception {
+        System.out.println("Server starting...");
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(8080);
 
@@ -28,6 +29,7 @@ public class Start {
         context.setResources(resources);
 
         tomcat.start();
+        System.out.println("Server started at Port:8080");
         tomcat.getServer().await();
     }
 }

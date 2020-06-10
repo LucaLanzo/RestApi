@@ -133,16 +133,24 @@
         </dependency>
 
 
-        <!-- This dependency is needed to get the @XmlRootElement annotation on resources.
-             The dependency for all XML representations was moved to javax.xml.bind but I couldn't get it to work.
-             Additionally, the pom.xml from the PVS repo didn't include a dependency for XML representation
-             (maybe because it was moved and the repo was from 2019?) so I had to manually add this one: -->
+        <!-- These dependencies are needed to get the @XmlRootElement annotation on resources.
+             The pom.xml from the PVS repo didn't include a dependency for XML representation
+             (maybe because it was moved and the repo was from 2019?) so I had to manually add
+             all of these to get it to work: -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
-            <version>2.4.0-b180830.0359</version>
+            <version>2.3.0</version>
         </dependency>
-
-
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+            <version>1.1.1</version>
+        </dependency>
     </dependencies>
 </project>
