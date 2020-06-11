@@ -1,31 +1,38 @@
 package ressources;
 
+import com.owlike.genson.annotation.JsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.types.ObjectId;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+
+/***
+ * By Luca Lanzo
+ */
+
 
 @XmlRootElement
 public class Course {
     @BsonId
-    private String _id;
+    private String hashId;
     private String name;
 
-    public Course() {
-    }
+    public Course() {}
 
     public Course(String name) {
+        this.hashId = ObjectId.get().toString();
         this.name = name;
     }
 
-
-    public String get_id() {
-        return _id;
+    public String getHashId() {
+        if (this.hashId == null) {
+            setHashId(ObjectId.get().toString());
+        }
+        return this.hashId;
     }
 
-    public void set_id(String _id) {
-        this._id = _id;
+    public void setHashId(String hash) {
+        this.hashId = hash;
     }
 
     public String getName() {
