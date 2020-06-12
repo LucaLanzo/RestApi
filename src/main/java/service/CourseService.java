@@ -66,7 +66,7 @@ public class CourseService {
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response updateCourse(@PathParam ("id") String id, Course updatedCourse) {
         updatedCourse.setHashId(id);
-        courseDatabase.updateCourse(updatedCourse, id);
+        courseDatabase.update(updatedCourse, id);
         return Response.noContent().build();
     }
 
@@ -75,7 +75,7 @@ public class CourseService {
     @DELETE
     @Path("{id}")
     public Response deleteCourse(@PathParam ("id") String id) {
-        courseDatabase.deleteCourse(id);
+        courseDatabase.delete(id);
         return Response.noContent().build();
     }
 }

@@ -29,7 +29,7 @@ public class MongoOperations<D> {
             .build();
     protected MongoClient mongoClient = MongoClients.create(clientSettings);
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
-    public MongoCollection<D> collection;
+    protected MongoCollection<D> collection;
 
     // protected MongoClient mongoClient= MongoClients.create("mongodb://admin:adminpassword@localhost:27017");
     // protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
@@ -62,11 +62,11 @@ public class MongoOperations<D> {
         return collection.find(Filters.eq("name", name)).first();
     }
 
-    public void updateCourse(D updatedDocument, String id) {
+    public void update(D updatedDocument, String id) {
         collection.replaceOne(Filters.eq("_id", id), updatedDocument);
     }
 
-    public void deleteCourse(String id) {
+    public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
 }
