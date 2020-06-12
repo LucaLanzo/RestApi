@@ -1,13 +1,15 @@
 package service;
 
-import database.MongoOperations;
+import database.CourseDAO;
+import database.MongoDAOImpl;
 import org.bson.types.ObjectId;
-import ressources.Course;
+import resources.Course;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,19 +25,23 @@ import java.util.List;
 public class CourseService {
     @Context
     protected UriInfo uriInfo;
-    protected MongoOperations<Course> courseDatabase = new MongoOperations<>("courses", Course.class);
+    protected CourseDAO<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
 
 
     // Get all courses in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllCoursesOrByName(@QueryParam("name") @DefaultValue("") String name) {
+        List<Course> allCourses;
         if (name.equals("")) {
-            List<Course> allCourses = courseDatabase.getAll();
-            return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {}).build();
+            allCourses = courseDatabase.getAll();
         } else {
-            Course course = courseDatabase.getByName(name);
-            return Response.ok(course).build();
+            allCourses = courseDatabase.getByName(name);
+        }
+        if(allCourses.size() == 0) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {}).build();
         }
     }
 
@@ -44,9 +50,13 @@ public class CourseService {
     @GET
     @Path("{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getCourseById( @PathParam("id") String id) {
+    public Response getCourseById(@PathParam("id") String id) {
         Course course = courseDatabase.getById(id);
-        return Response.ok(course).build();
+        if (course == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.ok(course).build();
+        }
     }
 
 
@@ -54,8 +64,11 @@ public class CourseService {
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response createCourse(Course newCourse) {
-        Course courseFromDatabase = courseDatabase.insertInto(newCourse, newCourse.getName());
-        URI locationURI = uriInfo.getAbsolutePathBuilder().path(courseFromDatabase.getHashId()).build();
+        if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getName() == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        courseDatabase.insertInto(newCourse);
+        URI locationURI = uriInfo.getAbsolutePathBuilder().path(newCourse.getHashId()).build();
         return Response.created(locationURI).build();
     }
 
@@ -65,9 +78,15 @@ public class CourseService {
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response updateCourse(@PathParam ("id") String id, Course updatedCourse) {
-        updatedCourse.setHashId(id);
-        courseDatabase.update(updatedCourse, id);
-        return Response.noContent().build();
+        if (updatedCourse.getName() == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } else if (courseDatabase.isNotInDatabase(id)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            updatedCourse.setHashId(id);
+            courseDatabase.update(updatedCourse, id);
+            return Response.noContent().build();
+        }
     }
 
 
@@ -75,7 +94,11 @@ public class CourseService {
     @DELETE
     @Path("{id}")
     public Response deleteCourse(@PathParam ("id") String id) {
-        courseDatabase.delete(id);
-        return Response.noContent().build();
+        if (courseDatabase.isNotInDatabase(id)) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        } else {
+            courseDatabase.delete(id);
+            return Response.noContent().build();
+        }
     }
 }

@@ -1,4 +1,4 @@
-package ressources;
+package resources;
 
 import com.owlike.genson.annotation.JsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonId;
@@ -31,6 +31,7 @@ public class Course {
         return this.hashId;
     }
 
+    
     public void setHashId(String hash) {
         this.hashId = hash;
     }

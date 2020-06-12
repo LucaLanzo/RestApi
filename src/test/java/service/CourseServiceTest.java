@@ -1,24 +1,26 @@
 package service;
 
 import com.owlike.genson.Genson;
-import database.MongoOperations;
+import database.MongoDAOImpl;
 import okhttp3.*;
-
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
-import ressources.Course;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import resources.Course;
 
 import java.io.IOException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+
+// TODO Tests for failures
 
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(OrderAnnotation.class)
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static MongoOperations<Course> courseDatabase = new MongoOperations<>("courses", Course.class);
+    private static MongoDAOImpl<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
     private Course testCourse;
     private Genson builder;
     private OkHttpClient client;
@@ -31,7 +33,7 @@ public class CourseServiceTest {
 
     @Test
     @Order(1)
-    public void createCourse() {
+    public void createCourseTest() {
         try {
             testCourse = new Course("Testcourse");
             RequestBody requestBody = RequestBody.create(builder.serialize(testCourse), JSON);
@@ -44,9 +46,9 @@ public class CourseServiceTest {
             Response response = client.newCall(request).execute();
 
             if (response.code() != 201) {
-                fail("Wrong or no response code.");
+                fail("Wrong response code.");
             } else {
-                assertTrue(response.header("Location").contains("http://localhost:8080/api/softskills/courses/ "
+                assertTrue(response.header("Location").contains("http://localhost:8080/api/softskills/courses/"
                                 + testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
@@ -58,7 +60,7 @@ public class CourseServiceTest {
 
     @Test
     @Order(2)
-    public void getAllCourses() {
+    public void getAllCoursesTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL)
@@ -66,7 +68,12 @@ public class CourseServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-            assertTrue(response.body().string().contains("Testcourse"));
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertTrue(response.body().string().contains("Testcourse"));
+            }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -76,7 +83,7 @@ public class CourseServiceTest {
 
     @Test
     @Order(3)
-    public void getCourseById() {
+    public void getCourseByIdTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
@@ -84,7 +91,12 @@ public class CourseServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-            assertTrue(response.body().string().contains("Testcourse"));
+
+            if (response.code() != 200) {
+                fail("Wrong response code");
+            } else {
+                assertTrue(response.body().string().contains("Testcourse"));
+            }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -94,7 +106,7 @@ public class CourseServiceTest {
 
     @Test
     @Order(4)
-    public void getCourseByName() {
+    public void getCourseByNameTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/?name=" + testCourse.getName())
@@ -102,7 +114,12 @@ public class CourseServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-            assertTrue(response.body().string().contains("Testcourse"));
+
+            if (response.code() != 200) {
+                fail("Wrong response code");
+            } else {
+                assertTrue(response.body().string().contains("Testcourse"));
+            }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -112,9 +129,9 @@ public class CourseServiceTest {
 
     @Test
     @Order(5)
-    public void updateCourse() {
+    public void updateCourseTest() {
         try {
-
+            testCourse.setName("TestcoursePutTest");
             RequestBody requestBody = RequestBody.create(builder.serialize(testCourse), JSON);
 
             Request request = new Request.Builder()
@@ -123,23 +140,58 @@ public class CourseServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-            assertTrue(response.body().string().contains("TestcoursePut"));
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server");
+
+            if (response.code() != 204) {
+                fail("Wrong response code");
+            }
+
+            request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId())
+                    .get()
+                    .build();
+
+            response = client.newCall(request).execute();
+
+            assertTrue(response.body().string().contains("TestcoursePutTest"));
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }
     }
 
     @Test
-    public void deleteCourse() {
+    @Order(6)
+    public void deleteCourseTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId())
+                    .delete()
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 204) {
+                fail("Wrong response code");
+            }
+
+            request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId())
+                    .get()
+                    .build();
+
+            response = client.newCall(request).execute();
+
+
+            assertFalse(response.body().string().contains("TestcoursePutTest"));
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
     }
 
     @AfterAll
-    public void tearDown() throws IOException {
-        Course course = courseDatabase.getByName("TestKurs");
-        if (!(course == null)) {
-            courseDatabase.delete(course.getHashId());
+    public void tearDown() {
+        List<Course> allCoursesByName = courseDatabase.getByName("Testcourse");
+        if (allCoursesByName.size() != 0) {
+            courseDatabase.delete(allCoursesByName.get(0).getHashId());
         }
     }
 }

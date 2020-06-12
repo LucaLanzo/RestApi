@@ -6,7 +6,6 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.bson.types.ObjectId;
 
 import java.util.*;
 
@@ -18,7 +17,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 
 
-public class MongoOperations<D> {
+public class MongoDAOImpl<D> implements CourseDAO<D> {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -31,11 +30,8 @@ public class MongoOperations<D> {
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
     protected MongoCollection<D> collection;
 
-    // protected MongoClient mongoClient= MongoClients.create("mongodb://admin:adminpassword@localhost:27017");
-    // protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
-    // public MongoCollection<Course> collection;
 
-    public MongoOperations(String collectionName, Class<D> className) {
+    public MongoDAOImpl(String collectionName, Class<D> className) {
         this.collection = database.getCollection(collectionName, className);
     }
 
@@ -49,17 +45,21 @@ public class MongoOperations<D> {
         return allDocuments;
     }
 
-    public D getByName(String name) {
-        return collection.find(Filters.eq("name", name)).first();
+    public List<D> getByName(String name) {
+        MongoCursor<D> cursor = collection.find(Filters.eq("name", name)).cursor();
+        List<D> allFoundDocuments = new ArrayList<>();
+        while(cursor.hasNext()) {
+            allFoundDocuments.add(cursor.next());
+        }
+        return allFoundDocuments;
     }
 
     public D getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
-    public D insertInto(D document, String name) {
+    public void insertInto(D document) {
         collection.insertOne(document);
-        return collection.find(Filters.eq("name", name)).first();
     }
 
     public void update(D updatedDocument, String id) {
@@ -68,5 +68,10 @@ public class MongoOperations<D> {
 
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
+    }
+
+    public boolean isNotInDatabase(String id) {
+        D document = getById(id);
+        return document == null;
     }
 }

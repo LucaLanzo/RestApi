@@ -51,14 +51,13 @@
 
 
     <dependencies>
+        <!-- Using Junit Version 5 instead of 4 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.7.0-M1</version>
             <scope>test</scope>
         </dependency>
-
-
 
 
         <dependency>
@@ -112,11 +111,6 @@
             <artifactId>jersey-media-multipart</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-        <!--dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-jaxb</artifactId>
-            <version>${jersey.version}</version>
-        </dependency-->
 
 
         <dependency>
