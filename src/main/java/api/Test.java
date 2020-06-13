@@ -11,8 +11,6 @@ import resources.Course;
 
 public class Test {
     public static void main(String[] args) {
-        Genson builder = new Genson();
-        Course course = new Course("TestKurs");
-        System.out.println(builder.serialize(course));
+
     }
 }

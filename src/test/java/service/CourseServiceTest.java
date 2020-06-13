@@ -189,7 +189,7 @@ public class CourseServiceTest {
 
     @AfterAll
     public void tearDown() {
-        List<Course> allCoursesByName = courseDatabase.getByName("Testcourse");
+        List<Course> allCoursesByName = courseDatabase.getByName("Testcourse", 0, -1);
         if (allCoursesByName.size() != 0) {
             courseDatabase.delete(allCoursesByName.get(0).getHashId());
         }

@@ -1,6 +1,7 @@
 package service;
 
-import database.CourseDAO;
+import Paging.Pagination;
+import database.MongoDAO;
 import database.MongoDAOImpl;
 import org.bson.types.ObjectId;
 import resources.Course;
@@ -9,7 +10,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -25,27 +25,49 @@ import java.util.List;
 public class CourseService {
     @Context
     protected UriInfo uriInfo;
-    protected CourseDAO<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
+    protected MongoDAO<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
 
 
     // Get all courses in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getAllCoursesOrByName(@QueryParam("name") @DefaultValue("") String name) {
+    public Response getAllCoursesOrByName(@QueryParam("name") @DefaultValue("") String name,
+                                          @QueryParam("offset") @DefaultValue("0") int offset,
+                                          @QueryParam("size") @DefaultValue("10") int size) {
+        int amountOfResources = courseDatabase.getAmountOfResources();
+
         List<Course> allCourses;
         if (name.equals("")) {
-            allCourses = courseDatabase.getAll();
+            allCourses = courseDatabase.getAll(offset, size);
         } else {
-            allCourses = courseDatabase.getByName(name);
+            allCourses = courseDatabase.getByName(name, offset, size);
         }
-        if(allCourses.size() == 0) {
+
+        if (allCourses.size() == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
             Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                     .rel("createNewCourse").type("application/json")
                     .build();
 
-            return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {}).build();
+            Link previousPage = Pagination.createPreviousPage(uriInfo, "previous", name, offset, size);
+            Link thisPage = Pagination.createThisPage(uriInfo, "self", name, offset, size);
+            Link nextPage = Pagination.createNextPage(uriInfo, "next", name, offset, size, amountOfResources);
+
+            Link[] links;
+            if (previousPage == null && nextPage == null) {
+                links = new Link[] {linkForPost, thisPage};
+            } else if (previousPage == null) {
+                links = new Link[] {linkForPost, thisPage, nextPage};
+            } else if (nextPage == null) {
+                links = new Link[] {linkForPost, previousPage, thisPage};
+            } else {
+                links = new Link[] {linkForPost, previousPage, thisPage, nextPage};
+            }
+
+            return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {})
+                    .links(links)
+                    .build();
         }
     }
 
@@ -59,13 +81,13 @@ public class CourseService {
         if (course == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
-            Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath() + id)
+            Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
                     .rel("updateSingleCourse").type("application/json")
                     .build();
-            Link linkToDelete = Link.fromUri(uriInfo.getAbsolutePath() + id)
+            Link linkToDelete = Link.fromUri(uriInfo.getAbsolutePath())
                     .rel("deleteSingleCourse").type("application/json")
                     .build();
-            Link linkToGetAll = Link.fromUri(uriInfo.getAbsolutePath())
+            Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "courses")
                     .rel("getAllCourses").type("application/json")
                     .build();
 
@@ -102,7 +124,7 @@ public class CourseService {
             updatedCourse.setHashId(id);
             courseDatabase.update(updatedCourse, id);
 
-            Link link = Link.fromUri(uriInfo.getAbsolutePath() + id)
+            Link link = Link.fromUri(uriInfo.getAbsolutePath())
                     .rel("getSingleCourse").type("application/json")
                     .build();
 
@@ -120,7 +142,7 @@ public class CourseService {
         } else {
             courseDatabase.delete(id);
 
-            Link link = Link.fromUri(uriInfo.getAbsolutePath())
+            Link link = Link.fromUri(uriInfo.getBaseUri() + "courses")
                     .rel("getAllCourses").type("application/json")
                     .build();
 
