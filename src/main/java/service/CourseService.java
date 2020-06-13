@@ -41,6 +41,10 @@ public class CourseService {
         if(allCourses.size() == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
+            Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
+                    .rel("createNewCourse").type("application/json")
+                    .build();
+
             return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {}).build();
         }
     }
@@ -55,7 +59,17 @@ public class CourseService {
         if (course == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
-            return Response.ok(course).build();
+            Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath() + id)
+                    .rel("updateSingleCourse").type("application/json")
+                    .build();
+            Link linkToDelete = Link.fromUri(uriInfo.getAbsolutePath() + id)
+                    .rel("deleteSingleCourse").type("application/json")
+                    .build();
+            Link linkToGetAll = Link.fromUri(uriInfo.getAbsolutePath())
+                    .rel("getAllCourses").type("application/json")
+                    .build();
+
+            return Response.ok(course).links(linkToPut, linkToDelete, linkToGetAll).build();
         }
     }
 
@@ -68,7 +82,9 @@ public class CourseService {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
         courseDatabase.insertInto(newCourse);
+
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newCourse.getHashId()).build();
+
         return Response.created(locationURI).build();
     }
 
@@ -85,7 +101,12 @@ public class CourseService {
         } else {
             updatedCourse.setHashId(id);
             courseDatabase.update(updatedCourse, id);
-            return Response.noContent().build();
+
+            Link link = Link.fromUri(uriInfo.getAbsolutePath() + id)
+                    .rel("getSingleCourse").type("application/json")
+                    .build();
+
+            return Response.noContent().links(link).build();
         }
     }
 
@@ -98,7 +119,12 @@ public class CourseService {
             return Response.status(Response.Status.NOT_FOUND).build();
         } else {
             courseDatabase.delete(id);
-            return Response.noContent().build();
+
+            Link link = Link.fromUri(uriInfo.getAbsolutePath())
+                    .rel("getAllCourses").type("application/json")
+                    .build();
+
+            return Response.noContent().links(link).build();
         }
     }
 }
