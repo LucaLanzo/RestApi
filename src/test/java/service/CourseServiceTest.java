@@ -14,6 +14,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 // TODO Tests for failures
+// TODO Response Bodies should be Optionals. Don't catch IOExceptions but check for Optional.isPresent()
 
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(OrderAnnotation.class)

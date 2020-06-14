@@ -76,6 +76,10 @@ public class MongoDAOImpl<D> implements CourseDAO<D> {
         return document == null;
     }
 
+    public int getAmountOfResources(String name) {
+        return (int) collection.countDocuments(Filters.eq("name", name));
+    }
+
     public int getAmountOfResources() {
         return (int) collection.countDocuments();
     }

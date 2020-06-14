@@ -46,4 +46,30 @@ public class Pagination {
                     .build();
         }
     }
+
+
+    public static Link[] getLinkArray(Link linkForPost, Link previousPage, Link thisPage, Link nextPage) {
+        if (previousPage == null && nextPage == null) {
+            return new Link[] {linkForPost, thisPage};
+        } else if (previousPage == null) {
+            return new Link[] {linkForPost, thisPage, nextPage};
+        } else if (nextPage == null) {
+            return new Link[] {linkForPost, previousPage, thisPage};
+        } else {
+            return new Link[] {linkForPost, previousPage, thisPage, nextPage};
+        }
+    }
+
+
+    public static int checkOffset(int offset, int amountOfResources) {
+        if (offset > amountOfResources) offset = amountOfResources;
+        if (offset < 0) offset = 0;
+        return offset;
+    }
+
+
+    public static int checkSize(int size) {
+        if (size <= 0) return 1;
+        else return size;
+    }
 }
