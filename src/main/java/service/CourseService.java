@@ -1,7 +1,7 @@
 package service;
 
-import Paging.Pagination;
-import database.MongoDAO;
+import paging.Pagination;
+import database.CourseDAO;
 import database.MongoDAOImpl;
 import org.bson.types.ObjectId;
 import resources.Course;
@@ -17,15 +17,12 @@ import java.util.List;
  * By Luca Lanzo
  */
 
-// TODO Check for all the stupid shit a user can do
-// To return header in response: Response.ok(bla).header("links", link).build();
-
 
 @Path("courses")
 public class CourseService {
     @Context
     protected UriInfo uriInfo;
-    protected MongoDAO<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
+    protected CourseDAO<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
 
 
     // Get all courses in the database
@@ -35,6 +32,14 @@ public class CourseService {
                                           @QueryParam("offset") @DefaultValue("0") int offset,
                                           @QueryParam("size") @DefaultValue("10") int size) {
         int amountOfResources = courseDatabase.getAmountOfResources();
+
+        if (size <= 0) size = 1;
+        if (offset >= amountOfResources) {
+            offset = amountOfResources;
+        }
+        if (offset < 0) {
+            offset = 0;
+        }
 
         List<Course> allCourses;
         if (name.equals("")) {
@@ -50,9 +55,9 @@ public class CourseService {
                     .rel("createNewCourse").type("application/json")
                     .build();
 
-            Link previousPage = Pagination.createPreviousPage(uriInfo, "previous", name, offset, size);
-            Link thisPage = Pagination.createThisPage(uriInfo, "self", name, offset, size);
-            Link nextPage = Pagination.createNextPage(uriInfo, "next", name, offset, size, amountOfResources);
+            Link previousPage = Pagination.createPreviousPage(uriInfo, "previousPage", name, offset, size);
+            Link thisPage = Pagination.createThisPage(uriInfo, "selfPage", name, offset, size);
+            Link nextPage = Pagination.createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
 
             Link[] links;
             if (previousPage == null && nextPage == null) {

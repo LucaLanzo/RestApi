@@ -17,7 +17,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 
 
-public class MongoDAOImpl<D> implements MongoDAO<D> {
+public class MongoDAOImpl<D> implements CourseDAO<D> {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -37,10 +37,6 @@ public class MongoDAOImpl<D> implements MongoDAO<D> {
 
     // To improve the runtime, pagination in this API is done at database level. No collections needed at the service.
     public List<D> getAll(int offset, int size) {
-        if (size < 0) size = 0;
-        if (offset >= getAmountOfResources()) {
-            offset = getAmountOfResources();
-        }
         List<D> allDocuments = new ArrayList<>();
         try (MongoCursor<D> cursor = collection.find().skip(offset).limit(size).iterator()) {
             while(cursor.hasNext()) {
@@ -51,10 +47,6 @@ public class MongoDAOImpl<D> implements MongoDAO<D> {
     }
 
     public List<D> getByName(String name, int offset, int size) {
-        if (size < 0) size = 0;
-        if (offset >= getAmountOfResources()) {
-            offset = getAmountOfResources();
-        }
         MongoCursor<D> cursor = collection.find(Filters.eq("name", name)).skip(offset).limit(size).cursor();
         List<D> allFoundDocuments = new ArrayList<>();
         while(cursor.hasNext()) {

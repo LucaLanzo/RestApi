@@ -2,7 +2,7 @@ package database;
 
 import java.util.List;
 
-public interface MongoDAO<D> {
+public interface CourseDAO<D> {
     List<D> getAll(int offset, int size);
     List<D> getByName(String name, int offset, int size);
     D getById(String id);
