@@ -1,7 +1,7 @@
 package service;
 
 import com.owlike.genson.Genson;
-import database.MongoDAOImpl;
+import database.daoimpl.EventDAOImpl;
 import okhttp3.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -13,15 +13,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// TODO Tests for failures
-// TODO Response Bodies should be Optionals. Don't catch IOExceptions but check for Optional.isPresent()
 
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(OrderAnnotation.class)
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static MongoDAOImpl<Course> courseDatabase = new MongoDAOImpl<>("courses", Course.class);
+    private static EventDAOImpl<Course> courseDatabase = new EventDAOImpl<>("courses", Course.class);
     private Course testCourse;
     private Genson builder;
     private OkHttpClient client;
@@ -36,7 +34,7 @@ public class CourseServiceTest {
     @Order(1)
     public void createCourseTest() {
         try {
-            testCourse = new Course("Testcourse");
+            testCourse = new Course("Testcourse", "A test course for JUnit", 50);
             RequestBody requestBody = RequestBody.create(builder.serialize(testCourse), JSON);
 
             Request request = new Request.Builder()
@@ -110,7 +108,7 @@ public class CourseServiceTest {
     public void getCourseByNameTest() {
         try {
             Request request = new Request.Builder()
-                    .url(BASE_URL + "/?name=" + testCourse.getName())
+                    .url(BASE_URL + "/?courseName=" + testCourse.getCourseName())
                     .get()
                     .build();
 
@@ -132,7 +130,7 @@ public class CourseServiceTest {
     @Order(5)
     public void updateCourseTest() {
         try {
-            testCourse.setName("TestcoursePutTest");
+            testCourse.setCourseName("TestcoursePutTest");
             RequestBody requestBody = RequestBody.create(builder.serialize(testCourse), JSON);
 
             Request request = new Request.Builder()

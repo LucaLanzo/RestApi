@@ -1,10 +1,10 @@
 package resources;
 
-import com.owlike.genson.annotation.JsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 /***
  * By Luca Lanzo
@@ -15,14 +15,21 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class Course {
     @BsonId
     private String hashId;
-    private String name;
+    private String courseName;
+    private String courseDescription;
+    private int maximumStudents;
+    private List<Event> events;
+
 
     public Course() {}
 
-    public Course(String name) {
+    public Course(String courseName, String courseDescription, int maximumStudents) {
         this.hashId = ObjectId.get().toString();
-        this.name = name;
+        this.courseName = courseName;
+        this.courseDescription = courseDescription;
+        this.maximumStudents = maximumStudents;
     }
+
 
     public String getHashId() {
         if (this.hashId == null) {
@@ -31,16 +38,34 @@ public class Course {
         return this.hashId;
     }
 
-    
-    public void setHashId(String hash) {
-        this.hashId = hash;
+    public void setHashId(String hashId) {
+        this.hashId = hashId;
     }
 
-    public String getName() {
-        return name;
+
+    public String getCourseName() {
+        return this.courseName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setCourseName(String courseName) {
+        this.courseName = courseName;
+    }
+
+
+    public String getCourseDescription() {
+        return this.courseDescription;
+    }
+
+    public void setCourseDescription(String courseDescription) {
+        this.courseDescription = courseDescription;
+    }
+
+
+    public int getMaximumStudents() {
+        return maximumStudents;
+    }
+
+    public void setMaximumStudents(int maximumStudents) {
+        this.maximumStudents = maximumStudents;
     }
 }

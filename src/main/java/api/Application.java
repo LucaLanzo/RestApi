@@ -2,6 +2,7 @@ package api;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import service.CourseService;
+import service.EventService;
 import service.StartService;
 
 import javax.ws.rs.ApplicationPath;
@@ -24,6 +25,7 @@ public class Application extends ResourceConfig {
         Set<Class<?>> serviceClasses = new HashSet<>();
         serviceClasses.add(StartService.class);
         serviceClasses.add(CourseService.class);
+        serviceClasses.add(EventService.class);
         return serviceClasses;
     }
 }

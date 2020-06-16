@@ -1,9 +1,11 @@
-package database;
+package database.daoimpl;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
+import database.dao.CourseDAO;
+import database.dao.EventDAO;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
@@ -17,7 +19,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 
 
-public class MongoDAOImpl<D> implements CourseDAO<D> {
+public class EventDAOImpl<D> implements EventDAO<D> {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -31,11 +33,11 @@ public class MongoDAOImpl<D> implements CourseDAO<D> {
     protected MongoCollection<D> collection;
 
 
-    public MongoDAOImpl(String collectionName, Class<D> className) {
+    public EventDAOImpl(String collectionName, Class<D> className) {
         this.collection = database.getCollection(collectionName, className);
     }
 
-    // To improve the runtime, pagination in this API is done at database level. No collections needed at the service.
+
     public List<D> getAll(int offset, int size) {
         List<D> allDocuments = new ArrayList<>();
         try (MongoCursor<D> cursor = collection.find().skip(offset).limit(size).iterator()) {
@@ -47,7 +49,7 @@ public class MongoDAOImpl<D> implements CourseDAO<D> {
     }
 
     public List<D> getByName(String name, int offset, int size) {
-        MongoCursor<D> cursor = collection.find(Filters.eq("name", name)).skip(offset).limit(size).cursor();
+        MongoCursor<D> cursor = collection.find(Filters.eq("courseName", name)).skip(offset).limit(size).cursor();
         List<D> allFoundDocuments = new ArrayList<>();
         while(cursor.hasNext()) {
             allFoundDocuments.add(cursor.next());
@@ -70,6 +72,7 @@ public class MongoDAOImpl<D> implements CourseDAO<D> {
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
+
 
     public boolean isNotInDatabase(String id) {
         D document = getById(id);

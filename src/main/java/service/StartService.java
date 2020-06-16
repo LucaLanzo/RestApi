@@ -18,10 +18,13 @@ public class StartService {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getDispatcher() {
-        Link link = Link.fromUri(uriInfo.getAbsolutePath() + "courses")
+        Link linkToCourses = Link.fromUri(uriInfo.getAbsolutePath() + "courses")
                 .rel("getAllCourses").type("application/json")
                 .build();
+        Link linkToEvents = Link.fromUri(uriInfo.getAbsolutePath() + "events")
+                .rel("getAllEvents").type("application/json")
+                .build();
 
-        return Response.noContent().links(link).build();
+        return Response.noContent().links(linkToCourses, linkToEvents).build();
     }
 }

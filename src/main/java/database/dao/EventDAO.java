@@ -1,8 +1,8 @@
-package database;
+package database.dao;
 
 import java.util.List;
 
-public interface CourseDAO<D> {
+public interface EventDAO<D> {
     List<D> getAll(int offset, int size);
     List<D> getByName(String name, int offset, int size);
     D getById(String id);
