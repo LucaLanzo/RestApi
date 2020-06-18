@@ -5,9 +5,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import database.dao.CourseDAO;
-import database.dao.EventDAO;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import resources.Course;
 
 import java.util.*;
 
@@ -19,7 +19,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 
 
-public class CourseDAOImpl<D> implements CourseDAO<D> {
+public class CourseDAOImpl implements CourseDAO {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -30,43 +30,43 @@ public class CourseDAOImpl<D> implements CourseDAO<D> {
             .build();
     protected MongoClient mongoClient = MongoClients.create(clientSettings);
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
-    protected MongoCollection<D> collection;
+    protected MongoCollection<Course> collection;
 
 
-    public CourseDAOImpl(String collectionName, Class<D> className) {
+    public CourseDAOImpl(String collectionName, Class<Course> className) {
         this.collection = database.getCollection(collectionName, className);
     }
 
 
-    public List<D> getAll(int offset, int size) {
-        List<D> allDocuments = new ArrayList<>();
-        try (MongoCursor<D> cursor = collection.find().skip(offset).limit(size).iterator()) {
+    public List<Course> getAll(int offset, int size) {
+        List<Course> allCourses = new ArrayList<>();
+        try (MongoCursor<Course> cursor = collection.find().skip(offset).limit(size).iterator()) {
             while(cursor.hasNext()) {
-                allDocuments.add(cursor.next());
+                allCourses.add(cursor.next());
             }
         }
-        return allDocuments;
+        return allCourses;
     }
 
-    public List<D> getByName(String name, int offset, int size) {
-        MongoCursor<D> cursor = collection.find(Filters.eq("courseName", name)).skip(offset).limit(size).cursor();
-        List<D> allFoundDocuments = new ArrayList<>();
+    public List<Course> getByName(String name, int offset, int size) {
+        MongoCursor<Course> cursor = collection.find(Filters.eq("courseName", name)).skip(offset).limit(size).cursor();
+        List<Course> allFoundCourses = new ArrayList<>();
         while(cursor.hasNext()) {
-            allFoundDocuments.add(cursor.next());
+            allFoundCourses.add(cursor.next());
         }
-        return allFoundDocuments;
+        return allFoundCourses;
     }
 
-    public D getById(String id) {
+    public Course getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
-    public void insertInto(D document) {
-        collection.insertOne(document);
+    public void insertInto(Course newCourse) {
+        collection.insertOne(newCourse);
     }
 
-    public void update(D updatedDocument, String id) {
-        collection.replaceOne(Filters.eq("_id", id), updatedDocument);
+    public void update(Course updatedCourse, String id) {
+        collection.replaceOne(Filters.eq("_id", id), updatedCourse);
     }
 
     public void delete(String id) {
@@ -75,12 +75,12 @@ public class CourseDAOImpl<D> implements CourseDAO<D> {
 
 
     public boolean isNotInDatabase(String id) {
-        D document = getById(id);
-        return document == null;
+        Course course = getById(id);
+        return course == null;
     }
 
-    public int getAmountOfResources(String name) {
-        return (int) collection.countDocuments(Filters.eq("name", name));
+    public int getAmountOfResources(String courseName) {
+        return (int) collection.countDocuments(Filters.eq("courseName", courseName));
     }
 
     public int getAmountOfResources() {

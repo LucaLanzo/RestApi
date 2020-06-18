@@ -4,12 +4,16 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
-import database.dao.CourseDAO;
 import database.dao.EventDAO;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import resources.Course;
+import resources.Event;
 
-import java.util.*;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -19,7 +23,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 
 
-public class EventDAOImpl<D> implements EventDAO<D> {
+public class EventDAOImpl implements EventDAO {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
@@ -30,43 +34,57 @@ public class EventDAOImpl<D> implements EventDAO<D> {
             .build();
     protected MongoClient mongoClient = MongoClients.create(clientSettings);
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
-    protected MongoCollection<D> collection;
+    protected MongoCollection<Event> collection;
 
 
-    public EventDAOImpl(String collectionName, Class<D> className) {
+    public EventDAOImpl(String collectionName, Class<Event> className) {
         this.collection = database.getCollection(collectionName, className);
     }
 
 
-    public List<D> getAll(int offset, int size) {
-        List<D> allDocuments = new ArrayList<>();
-        try (MongoCursor<D> cursor = collection.find().skip(offset).limit(size).iterator()) {
-            while(cursor.hasNext()) {
-                allDocuments.add(cursor.next());
-            }
+    public List<Event> getAll(int offset, int size) {
+        List<Event> allEvents = new ArrayList<>();
+        for (Event event : collection.find().skip(offset).limit(size)) {
+            allEvents.add(event);
         }
-        return allDocuments;
+        return allEvents;
     }
 
-    public List<D> getByName(String name, int offset, int size) {
-        MongoCursor<D> cursor = collection.find(Filters.eq("courseName", name)).skip(offset).limit(size).cursor();
-        List<D> allFoundDocuments = new ArrayList<>();
-        while(cursor.hasNext()) {
-            allFoundDocuments.add(cursor.next());
-        }
-        return allFoundDocuments;
+
+    public List<Event> getByDate(int date) {
+        return null;
     }
 
-    public D getById(String id) {
+
+    public List<Event> getByTime(int startTime, int endTime) {
+        return null;
+    }
+
+
+    public List<Event> getByTimeframe(int startTime, int endTime) {
+        return null;
+    }
+
+
+    public List<Event> getByAssociatedCourse(String courseLink, int offset, int size) {
+        List<Event> allEventsWithSpecificCourse = new ArrayList<>();
+        for (Event event : collection.find(Filters.eq("course", courseLink)).skip(offset).limit(size)) {
+            allEventsWithSpecificCourse.add(event);
+        }
+        return allEventsWithSpecificCourse;
+    }
+
+
+    public Event getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
-    public void insertInto(D document) {
-        collection.insertOne(document);
+    public void insertInto(Event newEvent) {
+        collection.insertOne(newEvent);
     }
 
-    public void update(D updatedDocument, String id) {
-        collection.replaceOne(Filters.eq("_id", id), updatedDocument);
+    public void update(Event updatedEvent, String id) {
+        collection.replaceOne(Filters.eq("_id", id), updatedEvent);
     }
 
     public void delete(String id) {
@@ -75,12 +93,12 @@ public class EventDAOImpl<D> implements EventDAO<D> {
 
 
     public boolean isNotInDatabase(String id) {
-        D document = getById(id);
+        Event document = getById(id);
         return document == null;
     }
 
-    public int getAmountOfResources(String name) {
-        return (int) collection.countDocuments(Filters.eq("name", name));
+    public int getAmountOfResources(String courseId) {
+        return getByAssociatedCourse(courseId, 0, 0).size();
     }
 
     public int getAmountOfResources() {

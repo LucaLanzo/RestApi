@@ -4,6 +4,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
 
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
 import java.util.List;
 
 /***
@@ -18,7 +19,7 @@ public class Course {
     private String courseName;
     private String courseDescription;
     private int maximumStudents;
-    private List<Event> events;
+    private String events;
 
 
     public Course() {}
@@ -32,10 +33,10 @@ public class Course {
 
 
     public String getHashId() {
-        if (this.hashId == null) {
+        if (hashId == null) {
             setHashId(ObjectId.get().toString());
         }
-        return this.hashId;
+        return hashId;
     }
 
     public void setHashId(String hashId) {
@@ -44,7 +45,7 @@ public class Course {
 
 
     public String getCourseName() {
-        return this.courseName;
+        return courseName;
     }
 
     public void setCourseName(String courseName) {
@@ -53,7 +54,7 @@ public class Course {
 
 
     public String getCourseDescription() {
-        return this.courseDescription;
+        return courseDescription;
     }
 
     public void setCourseDescription(String courseDescription) {
@@ -67,5 +68,14 @@ public class Course {
 
     public void setMaximumStudents(int maximumStudents) {
         this.maximumStudents = maximumStudents;
+    }
+
+
+    public String getEvents() {
+        return events;
+    }
+
+    public void setEvents(String events) {
+        this.events = events;
     }
 }

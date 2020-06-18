@@ -1,6 +1,7 @@
 package service;
 
 import com.owlike.genson.Genson;
+import database.daoimpl.CourseDAOImpl;
 import database.daoimpl.EventDAOImpl;
 import okhttp3.*;
 import org.junit.jupiter.api.*;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static EventDAOImpl<Course> courseDatabase = new EventDAOImpl<>("courses", Course.class);
+    private static CourseDAOImpl courseDatabase = new CourseDAOImpl("courses", Course.class);
     private Course testCourse;
     private Genson builder;
     private OkHttpClient client;

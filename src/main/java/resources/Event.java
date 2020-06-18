@@ -18,7 +18,7 @@ public class Event {
     private int date;
     private int startTime;
     private int endTime;
-    private Course course;
+    private String course;
 
 
     public Event() {}
@@ -31,10 +31,10 @@ public class Event {
 
 
     public String getHashId() {
-        if (this.hashId == null) {
+        if (hashId == null) {
             setHashId(ObjectId.get().toString());
         }
-        return this.hashId;
+        return hashId;
     }
 
     public void setHashId(String hashId) {
@@ -43,7 +43,7 @@ public class Event {
 
 
     public int getDate() {
-        return this.date;
+        return date;
     }
 
     public void setDate(int date) {
@@ -52,7 +52,7 @@ public class Event {
 
 
     public int getStartTime() {
-        return this.startTime;
+        return startTime;
     }
 
     public void setStartTime(int startTime) {
@@ -61,7 +61,7 @@ public class Event {
 
 
     public int getEndTime() {
-        return this.endTime;
+        return endTime;
     }
 
     public void setEndTime(int endTime) {
@@ -69,11 +69,11 @@ public class Event {
     }
 
 
-    public Course getCourse() {
+    public String getCourse() {
         return course;
     }
 
-    public void setCourse(Course course) {
+    public void setCourse(String course) {
         this.course = course;
     }
 }
