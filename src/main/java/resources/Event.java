@@ -1,8 +1,12 @@
 package resources;
 
+import com.owlike.genson.annotation.JsonConverter;
+import linkconverter.ServerLinkConverter;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.types.ObjectId;
+import org.glassfish.jersey.linking.InjectLink;
 
+import javax.ws.rs.core.Link;
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
@@ -19,7 +23,9 @@ public class Event {
     private int startTime;
     private int endTime;
     private String course;
-
+    @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/courses/${instance.hashId}", rel = "self",
+            type = "application/json")
+    private Link self;
 
     public Event() {}
 
@@ -75,5 +81,11 @@ public class Event {
 
     public void setCourse(String course) {
         this.course = course;
+    }
+
+
+    @JsonConverter(ServerLinkConverter.class)
+    public Link getSelf() {
+        return self;
     }
 }

@@ -1,5 +1,7 @@
 package api;
 
+import linkconverter.ServerLinkConverter;
+import org.glassfish.jersey.linking.DeclarativeLinkingFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import service.CourseService;
 import service.EventService;
@@ -19,6 +21,8 @@ public class Application extends ResourceConfig {
     public Application() {
         super();
         registerClasses(getServiceClasses());
+        packages("org.glassfish.jersey.examples.linking");
+        register(DeclarativeLinkingFeature.class);
     }
 
     public Set<Class<?>> getServiceClasses() {
