@@ -35,10 +35,8 @@ public class EventService {
     public Response getAllEvents(@QueryParam("name") @DefaultValue("") String name,
                                   @QueryParam("offset") @DefaultValue("0") int offset,
                                   @QueryParam("size") @DefaultValue("10") int size) {
-        // Pagination offset and size check
+        // Get ammount of events in the database
         int amountOfResources = eventDatabase.getAmountOfResources();
-        size = Pagination.checkSize(size);
-        offset = Pagination.checkOffset(offset, amountOfResources);
 
         // Get all courses or all courses by specific name from the database
         List<Event> allEvents = eventDatabase.getAll(offset, size);
@@ -51,15 +49,11 @@ public class EventService {
                 .rel("createNewEvent").type("application/json")
                 .build();
 
-        // Create previousPage, thisPage and nextPage links
-        Link previousPage = Pagination.createPreviousPage(uriInfo, "previousPage", name, offset, size);
-        Link thisPage = Pagination.createThisPage(uriInfo, "selfPage", name, offset, size);
-        Link nextPage = Pagination.createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
-
-        Link[] links = Pagination.getLinkArray(linkForPost, previousPage, thisPage, nextPage);
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
+                linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
-                .links(links)
+                .links(linksForPaginationAndPost)
                 .header("totalAmountOfEvents", amountOfResources)
                 .build();
     }

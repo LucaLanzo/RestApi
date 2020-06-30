@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static CourseDAOImpl courseDatabase = new CourseDAOImpl("courses", Course.class);
+    private static final CourseDAOImpl courseDatabase = new CourseDAOImpl("courses", Course.class);
     private Course testCourse;
     private Genson builder;
     private OkHttpClient client;

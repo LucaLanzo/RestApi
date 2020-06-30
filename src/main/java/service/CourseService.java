@@ -36,45 +36,31 @@ public class CourseService {
     public Response getAllCourses(@QueryParam("courseName") @DefaultValue("") String name,
                                           @QueryParam("offset") @DefaultValue("0") int offset,
                                           @QueryParam("size") @DefaultValue("10") int size) {
-        // Pagination offset and size check
+        // Get the total amount of Resources in the database
         int amountOfResources;
-        if (name.equals("")) {
-            amountOfResources = courseDatabase.getAmountOfResources();
-        } else {
-            amountOfResources = courseDatabase.getAmountOfResources(name);
-        }
-        size = Pagination.checkSize(size);
-        offset = Pagination.checkOffset(offset, amountOfResources);
+        if (name.equals("")) amountOfResources = courseDatabase.getAmountOfResources();
+        else amountOfResources = courseDatabase.getAmountOfResources(name);
+
 
         // Get all courses or all courses by specific name from the database
         List<Course> allCourses;
-        if (name.equals("")) {
-            allCourses = courseDatabase.getAll(offset, size);
-        } else {
-            allCourses = courseDatabase.getByName(name, offset, size);
-        }
+        if (name.equals("")) allCourses = courseDatabase.getAll(offset, size);
+        else allCourses = courseDatabase.getByName(name, offset, size);
 
         // If no courses have been found return 404 else display all courses
-        if (allCourses.size() == 0) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+        if (allCourses.size() == 0) return Response.status(Response.Status.NOT_FOUND).build();
 
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("createNewCourse").type("application/json")
                 .build();
 
-        // Create previousPage, thisPage and nextPage links
-        Link previousPage = Pagination.createPreviousPage(uriInfo, "previousPage", name, offset, size);
-        Link thisPage = Pagination.createThisPage(uriInfo, "selfPage", name, offset, size);
-        Link nextPage = Pagination.createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
-
-        Link[] links = Pagination.getLinkArray(linkForPost, previousPage, thisPage, nextPage);
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
+                linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {})
-                .links(links)
+                .links(linksForPaginationAndPost)
                 .header("totalAmountOfCourses", amountOfResources)
                 .build();
-
     }
 
 
@@ -104,6 +90,7 @@ public class CourseService {
     }
 
 
+    // TODO: WHY CAN YOU QUERY FOR A NAME HERE??????
     // Get events of a specific course
     @GET
     @Path("{courseId}/events")
@@ -115,15 +102,14 @@ public class CourseService {
         // Build a uri for the course
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();;
 
+        // Get the total amount of Resources in the database
         int amountOfResources = eventDatabase.getAmountOfResources(uriToCourse.toString());
-        size = Pagination.checkSize(size);
-        offset = Pagination.checkOffset(offset, amountOfResources);
 
-        // Get all courses or all courses by specific name from the database
+        // Get all events for the chosen course
         List<Event> allEventsWithSpecificCourse =
                 eventDatabase.getByAssociatedCourse(uriToCourse.toString(), offset, size);
 
-        // If no courses have been found return 404 else display all courses
+        // If no events have been found return 404 else display all events
         if (allEventsWithSpecificCourse.size() == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
@@ -132,15 +118,11 @@ public class CourseService {
                 .rel("createNewEvent").type("application/json")
                 .build();
 
-        // Create previousPage, thisPage and nextPage links
-        Link previousPage = Pagination.createPreviousPage(uriInfo, "previousPage", name, offset, size);
-        Link thisPage = Pagination.createThisPage(uriInfo, "selfPage", name, offset, size);
-        Link nextPage = Pagination.createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
-
-        Link[] links = Pagination.getLinkArray(linkForPost, previousPage, thisPage, nextPage);
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
+                linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEventsWithSpecificCourse) {})
-                .links(links)
+                .links(linksForPaginationAndPost)
                 .header("totalAmountOfEvents", amountOfResources)
                 .build();
     }
@@ -154,6 +136,7 @@ public class CourseService {
                                                        @PathParam("eventId") String eventId) {
         // Get the event from the database
         Event event = eventDatabase.getById(eventId);
+
         // If no event has been found by that id return 404 else display event with header hyperlinks to next state
         if (event == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -216,6 +199,7 @@ public class CourseService {
 
         // Update the course in the database
         courseDatabase.update(updatedCourse, courseId);
+
         // Set the new header hyperlink to the next state
         Link link = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("getSingleCourse").type("application/json")
@@ -236,6 +220,7 @@ public class CourseService {
 
         // Delete the course from the database
         courseDatabase.delete(courseId);
+
         // Set the new header hyperlink to the next state
         Link link = Link.fromUri(uriInfo.getBaseUri() + "courses")
                 .rel("getAllCourses").type("application/json")

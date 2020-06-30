@@ -21,6 +21,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class CourseDAOImpl implements CourseDAO {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
+
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
             pojoCodecRegistry);
@@ -29,6 +30,7 @@ public class CourseDAOImpl implements CourseDAO {
             .codecRegistry(codecRegistry)
             .build();
     protected MongoClient mongoClient = MongoClients.create(clientSettings);
+
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
     protected MongoCollection<Course> collection;
 

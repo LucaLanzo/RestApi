@@ -23,7 +23,7 @@ public class Event {
     private int startTime;
     private int endTime;
     private String course;
-    @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/courses/${instance.hashId}", rel = "self",
+    @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/events/${instance.hashId}", rel = "self",
             type = "application/json")
     private Link self;
 

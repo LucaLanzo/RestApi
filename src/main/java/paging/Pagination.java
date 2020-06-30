@@ -5,7 +5,7 @@ import javax.ws.rs.core.UriInfo;
 
 
 public class Pagination {
-    public static Link createPreviousPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
+    private static Link createPreviousPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
         if (offset == 0 || size == 0) {
             return null;
         } else if ((offset - size) <= 0){
@@ -16,12 +16,12 @@ public class Pagination {
     }
 
 
-    public static Link createThisPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
+    private static Link createThisPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
         return createLink(uriInfo, rel, name, offset, size);
     }
 
 
-    public static Link createNextPage(UriInfo uriInfo, String rel, String name, int offset, int size,
+    private static Link createNextPage(UriInfo uriInfo, String rel, String name, int offset, int size,
                                       int amountOfResources) {
         if ((offset + size) >= amountOfResources) {
             return null;
@@ -48,7 +48,7 @@ public class Pagination {
     }
 
 
-    public static Link[] getLinkArray(Link linkForPost, Link previousPage, Link thisPage, Link nextPage) {
+    private static Link[] getLinkArray(Link linkForPost, Link previousPage, Link thisPage, Link nextPage) {
         if (previousPage == null && nextPage == null) {
             return new Link[] {linkForPost, thisPage};
         } else if (previousPage == null) {
@@ -61,15 +61,28 @@ public class Pagination {
     }
 
 
-    public static int checkOffset(int offset, int amountOfResources) {
+    private static int checkOffset(int offset, int amountOfResources) {
         if (offset > amountOfResources) offset = amountOfResources;
         if (offset < 0) offset = 0;
         return offset;
     }
 
 
-    public static int checkSize(int size) {
+    private static int checkSize(int size) {
         if (size <= 0) return 1;
         else return size;
+    }
+
+
+    public static Link[] createPagination(UriInfo uriInfo, int size, int offset, int amountOfResources, String name,
+                                          Link linkForPost) {
+        size = checkSize(size);
+        offset = checkOffset(offset, amountOfResources);
+
+        Link previousPage = createPreviousPage(uriInfo, "previousPage", name, offset, size);
+        Link thisPage = createThisPage(uriInfo, "selfPage", name, offset, size);
+        Link nextPage = createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
+
+        return getLinkArray(linkForPost, previousPage, thisPage, nextPage);
     }
 }

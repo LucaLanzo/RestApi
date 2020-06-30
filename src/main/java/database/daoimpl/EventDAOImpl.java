@@ -7,11 +7,8 @@ import com.mongodb.client.model.Filters;
 import database.dao.EventDAO;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import resources.Course;
 import resources.Event;
 
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +22,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 public class EventDAOImpl implements EventDAO {
     protected ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
+
     protected CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
     protected CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
             pojoCodecRegistry);
@@ -33,6 +31,7 @@ public class EventDAOImpl implements EventDAO {
             .codecRegistry(codecRegistry)
             .build();
     protected MongoClient mongoClient = MongoClients.create(clientSettings);
+
     protected MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
     protected MongoCollection<Event> collection;
 
@@ -42,6 +41,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
 
+    // READ
     public List<Event> getAll(int offset, int size) {
         List<Event> allEvents = new ArrayList<>();
         for (Event event : collection.find().skip(offset).limit(size)) {
@@ -50,22 +50,22 @@ public class EventDAOImpl implements EventDAO {
         return allEvents;
     }
 
-
+    // READ
     public List<Event> getByDate(int date) {
         return null;
     }
 
-
+    // READ
     public List<Event> getByTime(int startTime, int endTime) {
         return null;
     }
 
-
+    // READ
     public List<Event> getByTimeframe(int startTime, int endTime) {
         return null;
     }
 
-
+    // READ
     public List<Event> getByAssociatedCourse(String courseLink, int offset, int size) {
         List<Event> allEventsWithSpecificCourse = new ArrayList<>();
         for (Event event : collection.find(Filters.eq("course", courseLink)).skip(offset).limit(size)) {
@@ -74,22 +74,26 @@ public class EventDAOImpl implements EventDAO {
         return allEventsWithSpecificCourse;
     }
 
-
+    // READ
     public Event getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
+    // CREATE
     public void insertInto(Event newEvent) {
         collection.insertOne(newEvent);
     }
 
+    // UPDATE
     public void update(Event updatedEvent, String id) {
         collection.replaceOne(Filters.eq("_id", id), updatedEvent);
     }
 
+    // DELETE
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
+
 
 
     public boolean isNotInDatabase(String id) {
