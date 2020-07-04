@@ -3,6 +3,11 @@ package database.dao;
 import resources.Event;
 import java.util.List;
 
+/***
+ * By Luca Lanzo
+ */
+
+
 public interface EventDAO {
     List<Event> getAll(int offset, int size);
     List<Event> getByDate(int date);

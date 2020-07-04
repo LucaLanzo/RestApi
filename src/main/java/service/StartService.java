@@ -1,13 +1,10 @@
 package service;
 
 import authorization.Authorization;
-import org.apache.tomcat.util.codec.binary.Base64;
 
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.io.IOException;
-import java.util.Objects;
 
 /***
  * By Luca Lanzo
@@ -37,9 +34,7 @@ public class StartService {
                 .build();
 
         if (tokenAndRole[0].equals("401")) {
-            return Response.status(Response.Status.UNAUTHORIZED)
-                    .header("WWW-Authenticate", "Basic realm=/api/softskills")
-                    .build();
+            return Authorization.getWWWAuthenticateResponse("realm=api/softskills/");
         }
 
         return Response.noContent().links(linkToCourses, linkToEvents)

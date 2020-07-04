@@ -1,11 +1,13 @@
 package api;
 
-import com.owlike.genson.Genson;
 import okhttp3.*;
-import org.apache.tomcat.util.codec.binary.Base64;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+
+/***
+ * By Luca Lanzo
+ */
+
 
 public class AuthTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");

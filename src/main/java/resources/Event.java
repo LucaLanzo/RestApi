@@ -8,7 +8,6 @@ import org.glassfish.jersey.linking.InjectLink;
 
 import javax.ws.rs.core.Link;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.List;
 
 /***
  * By Luca Lanzo

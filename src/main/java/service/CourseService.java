@@ -63,7 +63,11 @@ public class CourseService {
         else allCourses = courseDatabase.getByName(name, offset, size);
 
         // If no courses have been found return 404 else display all courses
-        if (allCourses.size() == 0) return Response.status(Response.Status.NOT_FOUND).build();
+        if (allCourses.size() == 0) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
+        }
 
         // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
@@ -75,6 +79,7 @@ public class CourseService {
         return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {})
                 .links(linksForPaginationAndPost)
                 .header("X-totalAmountOfCourses", amountOfResources)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
     }
 
@@ -102,7 +107,11 @@ public class CourseService {
         Course course = courseDatabase.getById(courseId);
 
         // If no course has been found by that id return 404 else display course with header hyperlinks to next state
-        if (course == null) return Response.status(Response.Status.NOT_FOUND).build();
+        if (course == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
+        }
 
         // Create the PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
@@ -115,7 +124,9 @@ public class CourseService {
                 .rel("getAllCourses").type("application/json")
                 .build();
 
-        return Response.ok(course).links(linkToPut, linkToDelete, linkToGetAll).build();
+        return Response.ok(course).links(linkToPut, linkToDelete, linkToGetAll)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 
 
@@ -153,7 +164,11 @@ public class CourseService {
                 eventDatabase.getByAssociatedCourse(uriToCourse.toString(), offset, size);
 
         // If no events have been found return 404 else display all events
-        if (allEventsWithSpecificCourse.size() == 0) return Response.status(Response.Status.NOT_FOUND).build();
+        if (allEventsWithSpecificCourse.size() == 0) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
+        }
 
         // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getBaseUri() + "events")
@@ -165,6 +180,7 @@ public class CourseService {
         return Response.ok(new GenericEntity<Collection<Event>>(allEventsWithSpecificCourse) {})
                 .links(linksForPaginationAndPost)
                 .header("X-totalAmountOfEvents", amountOfResources)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
     }
 
@@ -194,7 +210,9 @@ public class CourseService {
 
         // If no event has been found by that id return 404 else display event with header hyperlinks to next state
         if (event == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
         }
 
         // Create PUT, DELETE and GET links
@@ -208,7 +226,9 @@ public class CourseService {
                 .rel("getAllEvents").type("application/json")
                 .build();
 
-        return Response.ok(event).links(linkToPut, linkToDelete, linkToGetAll).build();
+        return Response.ok(event).links(linkToPut, linkToDelete, linkToGetAll)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 
 
@@ -233,7 +253,9 @@ public class CourseService {
         // If the hash value of the course object isn't a valid ObjectId-Hash-Value or the name is null return 400
         // The resource will automatically create a hash if it hasn't been set by the client
         if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getCourseName() == null) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
         }
 
         // Set the path to the course's events
@@ -247,7 +269,9 @@ public class CourseService {
         // Set the new location URI using the hash value as an index
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newCourse.getHashId()).build();
 
-        return Response.created(locationURI).build();
+        return Response.created(locationURI)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 
 
@@ -272,9 +296,13 @@ public class CourseService {
 
         // If the name is not set return 400. If the course to be updated can't be found return 404 as well
         if (updatedCourse.getCourseName() == null) {
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
         } else if (courseDatabase.isNotInDatabase(courseId)) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
         }
 
         // Give the new course the same hash as the old one
@@ -293,7 +321,9 @@ public class CourseService {
                 .rel("getSingleCourse").type("application/json")
                 .build();
 
-        return Response.noContent().links(link).build();
+        return Response.noContent().links(link)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 
 
@@ -317,7 +347,9 @@ public class CourseService {
 
         // If the course can't be found return 404
         if (courseDatabase.isNotInDatabase(courseId)) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return Response.status(Response.Status.NOT_FOUND)
+                    .header("Authorization", "Bearer " + tokenAndRole[0])
+                    .build();
         }
 
         // Delete the course from the database
@@ -328,6 +360,8 @@ public class CourseService {
                 .rel("getAllCourses").type("application/json")
                 .build();
 
-        return Response.noContent().links(link).build();
+        return Response.noContent().links(link)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 }

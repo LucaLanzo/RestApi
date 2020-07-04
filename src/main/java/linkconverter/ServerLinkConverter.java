@@ -1,7 +1,5 @@
 package linkconverter;
 
-
-
 import com.owlike.genson.Context;
 import com.owlike.genson.Converter;
 import com.owlike.genson.stream.ObjectReader;
@@ -9,9 +7,14 @@ import com.owlike.genson.stream.ObjectWriter;
 
 import javax.ws.rs.core.Link;
 
+/***
+ * By Luca Lanzo
+ */
+
+
 public class ServerLinkConverter implements Converter<Link> {
     @Override
-    public void serialize(Link link, ObjectWriter objectWriter, Context context) throws Exception {
+    public void serialize(Link link, ObjectWriter objectWriter, Context context) {
         objectWriter.writeName(link.getRel());
         objectWriter.beginObject();
         objectWriter.writeString("href", link.getUri().toASCIIString());
@@ -25,7 +28,7 @@ public class ServerLinkConverter implements Converter<Link> {
     }
 
     @Override
-    public Link deserialize(ObjectReader objectReader, Context context) throws Exception {
+    public Link deserialize(ObjectReader objectReader, Context context) {
         String uri = "";
         String type = "";
         String rel = "";

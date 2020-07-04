@@ -1,8 +1,12 @@
 package database.dao;
 
 import resources.Course;
-
 import java.util.List;
+
+/***
+ * By Luca Lanzo
+ */
+
 
 public interface CourseDAO {
     List<Course> getAll(int offset, int size);

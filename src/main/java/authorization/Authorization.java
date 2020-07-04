@@ -1,14 +1,13 @@
 package authorization;
 
 import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
 import java.util.Objects;
 
-/**
+/***
  * By Luca Lanzo
  */
+
 
 public class Authorization {
     private final static String BASE_URL = "https://api.fiw.fhws.de/auth/api/users/me";

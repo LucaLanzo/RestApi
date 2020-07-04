@@ -51,7 +51,7 @@
 
 
     <dependencies>
-        <!-- Using Junit Version 5 instead of 4 -->
+        <!-- Using Junit Version 5 instead of 4 because I want my tests executed in a specific order -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

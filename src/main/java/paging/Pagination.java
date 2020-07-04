@@ -3,6 +3,10 @@ package paging;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.UriInfo;
 
+/***
+ * By Luca Lanzo
+ */
+
 
 public class Pagination {
     private static Link createPreviousPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
