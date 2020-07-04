@@ -137,6 +137,8 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times are null
@@ -181,6 +183,8 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the name is not set return 400. If the event to be updated can't be found return 404
@@ -227,6 +231,8 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the event can't be found return 404

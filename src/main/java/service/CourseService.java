@@ -245,9 +245,11 @@ public class CourseService {
             e.printStackTrace();
         }
 
-        // Exit with WWW-Authenticate if wrong creds have been sent
+        // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the hash value of the course object isn't a valid ObjectId-Hash-Value or the name is null return 400
@@ -292,6 +294,8 @@ public class CourseService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the name is not set return 400. If the course to be updated can't be found return 404 as well
@@ -343,6 +347,8 @@ public class CourseService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        } else if (tokenAndRole[1].equals("True")) {
+            return Authorization.getWrongRoleResponse();
         }
 
         // If the course can't be found return 404
