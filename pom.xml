@@ -120,8 +120,8 @@
         </dependency>
 
 
-        <!-- Driver needed to interact with MongoDB Database. Includes BSON library to convert from Mongo BSON
-        representation to JSON representation -->
+        <!-- Java sync driver needed to interact with MongoDB Database. Includes BSON library to convert from Mongo
+             BSON representation to JSON representation -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
@@ -129,10 +129,10 @@
         </dependency>
 
 
-        <!-- These dependencies are needed to get the @XmlRootElement annotation on resources.
+        <!-- The following three dependencies are needed to get the @XmlRootElement annotation on resources.
              The pom.xml from the PVS repo didn't include a dependency for XML representation
              (maybe because it was moved and the repo was from 2019?) so I had to manually add
-             all of these to get it to work: -->
+             all of those three to get it to work: -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>

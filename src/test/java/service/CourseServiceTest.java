@@ -2,7 +2,6 @@ package service;
 
 import com.owlike.genson.Genson;
 import database.daoimpl.CourseDAOImpl;
-import database.daoimpl.EventDAOImpl;
 import okhttp3.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -11,6 +10,7 @@ import resources.Course;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,8 +48,8 @@ public class CourseServiceTest {
             if (response.code() != 201) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(response.header("Location").contains("http://localhost:8080/api/softskills/courses/"
-                                + testCourse.getHashId()));
+                assertTrue(Objects.requireNonNull(response.header("Location"))
+                        .contains("http://localhost:8080/api/softskills/courses/" + testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
@@ -72,7 +72,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(response.body().string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -95,7 +95,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(response.body().string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -118,7 +118,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(response.body().string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -152,7 +152,7 @@ public class CourseServiceTest {
 
             response = client.newCall(request).execute();
 
-            assertTrue(response.body().string().contains("TestcoursePutTest"));
+            assertTrue(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }
@@ -181,7 +181,7 @@ public class CourseServiceTest {
             response = client.newCall(request).execute();
 
 
-            assertFalse(response.body().string().contains("TestcoursePutTest"));
+            assertFalse(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }

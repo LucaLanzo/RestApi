@@ -1,20 +1,21 @@
 package service;
 
-import database.dao.CourseDAO;
+import authorization.Authorization;
 import database.dao.EventDAO;
-import database.daoimpl.CourseDAOImpl;
 import paging.Pagination;
 import database.daoimpl.EventDAOImpl;
 import org.bson.types.ObjectId;
-import resources.Course;
 import resources.Event;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.net.URI;
 
 import java.util.Collection;
 import java.util.List;
+
+import static authorization.Authorization.getWWWAuthenticateResponse;
 
 /***
  * By Luca Lanzo
@@ -25,7 +26,6 @@ import java.util.List;
 public class EventService {
     @Context
     protected UriInfo uriInfo;
-    protected CourseDAO courseDatabase = new CourseDAOImpl("courses", Course.class);
     protected EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
 
 
@@ -34,8 +34,22 @@ public class EventService {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllEvents(@QueryParam("name") @DefaultValue("") String name,
                                   @QueryParam("offset") @DefaultValue("0") int offset,
-                                  @QueryParam("size") @DefaultValue("10") int size) {
-        // Get ammount of events in the database
+                                  @QueryParam("size") @DefaultValue("10") int size,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return getWWWAuthenticateResponse("api/softskills/events");
+        }
+
+        // Get amount of events in the database
         int amountOfResources = eventDatabase.getAmountOfResources();
 
         // Get all courses or all courses by specific name from the database
@@ -45,6 +59,8 @@ public class EventService {
         if (allEvents.size() == 0) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        // Create POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("createNewEvent").type("application/json")
                 .build();
@@ -54,7 +70,7 @@ public class EventService {
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
                 .links(linksForPaginationAndPost)
-                .header("totalAmountOfEvents", amountOfResources)
+                .header("X-totalAmountOfEvents", amountOfResources)
                 .build();
     }
 
@@ -63,13 +79,30 @@ public class EventService {
     @GET
     @Path("{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getEventById(@PathParam("id") String eventId) {
+    public Response getEventById(@PathParam("id") String eventId,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return getWWWAuthenticateResponse("api/softskills/events");
+        }
+
         // Get the event from the database
         Event event = eventDatabase.getById(eventId);
+
         // If no event has been found by that id return 404 else display event with header hyperlinks to next state
         if (event == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        // Create PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("updateSingleEvent").type("application/json")
                 .build();
@@ -87,7 +120,21 @@ public class EventService {
     // Create a new event
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response createEvent(Event newEvent) {
+    public Response createEvent(Event newEvent,
+                                @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return getWWWAuthenticateResponse("api/softskills/events");
+        }
+
         // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times are null
         // return 400. The resource will automatically create a hash if it hasn't been set by the client
         if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() == 0
@@ -98,8 +145,10 @@ public class EventService {
         // Set an absolute path on the course attribute of the new event
         URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourse()).build();
         newEvent.setCourse(pathToCourse.toString());
+
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
+
         // Set the new location URI using the hash value as an index
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newEvent.getHashId()).build();
 
@@ -111,7 +160,21 @@ public class EventService {
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateCourse(@PathParam("id") String eventId, Event updatedEvent) {
+    public Response updateCourse(@PathParam("id") String eventId, Event updatedEvent,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return getWWWAuthenticateResponse("api/softskills/events");
+        }
+
         // If the name is not set return 400. If the event to be updated can't be found return 404
         if (updatedEvent.getStartTime() == 0 || updatedEvent.getEndTime() == 0 || updatedEvent.getDate() == 0) {
             return Response.status(Response.Status.BAD_REQUEST).build();
@@ -121,9 +184,11 @@ public class EventService {
 
         // Give the new event the same hash as the old one
         updatedEvent.setHashId(eventId);
+
         // Update the event in the database
         eventDatabase.update(updatedEvent, eventId);
-        // Set the new header hyperlink to the next state
+
+        // Create the GET link
         Link link = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("getSingleEvent").type("application/json")
                 .build();
@@ -135,7 +200,21 @@ public class EventService {
     // Delete a specific event
     @DELETE
     @Path("{id}")
-    public Response deleteEvent(@PathParam("id") String eventId) {
+    public Response deleteEvent(@PathParam("id") String eventId,
+                                @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return getWWWAuthenticateResponse("api/softskills/events");
+        }
+
         // If the event can't be found return 404
         if (eventDatabase.isNotInDatabase(eventId)) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -143,7 +222,8 @@ public class EventService {
 
         // Delete the event from the database
         eventDatabase.delete(eventId);
-        // Set the new header hyperlink to the next state
+
+        // Create the GET link
         Link link = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("getAllEvents").type("application/json")
                 .build();

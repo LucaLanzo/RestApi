@@ -1,8 +1,8 @@
 package service;
 
+import authorization.Authorization;
 import database.dao.EventDAO;
 import database.daoimpl.CourseDAOImpl;
-import org.glassfish.jersey.server.Uri;
 import paging.Pagination;
 import database.dao.CourseDAO;
 import database.daoimpl.EventDAOImpl;
@@ -12,6 +12,7 @@ import resources.Event;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
 import java.net.URI;
 
 import java.util.Collection;
@@ -34,8 +35,22 @@ public class CourseService {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllCourses(@QueryParam("courseName") @DefaultValue("") String name,
-                                          @QueryParam("offset") @DefaultValue("0") int offset,
-                                          @QueryParam("size") @DefaultValue("10") int size) {
+                                  @QueryParam("offset") @DefaultValue("0") int offset,
+                                  @QueryParam("size") @DefaultValue("10") int size,
+                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
         // Get the total amount of Resources in the database
         int amountOfResources;
         if (name.equals("")) amountOfResources = courseDatabase.getAmountOfResources();
@@ -50,16 +65,16 @@ public class CourseService {
         // If no courses have been found return 404 else display all courses
         if (allCourses.size() == 0) return Response.status(Response.Status.NOT_FOUND).build();
 
+        // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("createNewCourse").type("application/json")
                 .build();
-
         Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
                 linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {})
                 .links(linksForPaginationAndPost)
-                .header("totalAmountOfCourses", amountOfResources)
+                .header("X-totalAmountOfCourses", amountOfResources)
                 .build();
     }
 
@@ -68,14 +83,28 @@ public class CourseService {
     @GET
     @Path("{courseId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getCourseById(@PathParam("courseId") String courseId) {
-        // Get the course from the database
-        Course course = courseDatabase.getById(courseId);
-        // If no course has been found by that id return 404 else display course with header hyperlinks to next state
-        if (course == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+    public Response getCourseById(@PathParam("courseId") String courseId,
+                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
+        // Get the course from the database
+        Course course = courseDatabase.getById(courseId);
+
+        // If no course has been found by that id return 404 else display course with header hyperlinks to next state
+        if (course == null) return Response.status(Response.Status.NOT_FOUND).build();
+
+        // Create the PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("updateSingleCourse").type("application/json")
                 .build();
@@ -98,9 +127,23 @@ public class CourseService {
     public Response getAllEventsOfSpecificCourse(@PathParam("courseId") String courseId,
                                                  @QueryParam("name") @DefaultValue("") String name,
                                                  @QueryParam("offset") @DefaultValue("0") int offset,
-                                                 @QueryParam("size") @DefaultValue("10") int size) {
+                                                 @QueryParam("size") @DefaultValue("10") int size,
+                                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
         // Build a uri for the course
-        URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();;
+        URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
         // Get the total amount of Resources in the database
         int amountOfResources = eventDatabase.getAmountOfResources(uriToCourse.toString());
@@ -110,20 +153,18 @@ public class CourseService {
                 eventDatabase.getByAssociatedCourse(uriToCourse.toString(), offset, size);
 
         // If no events have been found return 404 else display all events
-        if (allEventsWithSpecificCourse.size() == 0) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+        if (allEventsWithSpecificCourse.size() == 0) return Response.status(Response.Status.NOT_FOUND).build();
 
+        // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("createNewEvent").type("application/json")
                 .build();
-
         Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
                 linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEventsWithSpecificCourse) {})
                 .links(linksForPaginationAndPost)
-                .header("totalAmountOfEvents", amountOfResources)
+                .header("X-totalAmountOfEvents", amountOfResources)
                 .build();
     }
 
@@ -133,7 +174,21 @@ public class CourseService {
     @Path("/{courseId}/events/{eventId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getSpecificEventFromSpecificCourse(@PathParam("courseId") String courseId,
-                                                       @PathParam("eventId") String eventId) {
+                                                       @PathParam("eventId") String eventId,
+                                                       @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
         // Get the event from the database
         Event event = eventDatabase.getById(eventId);
 
@@ -141,6 +196,8 @@ public class CourseService {
         if (event == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        // Create PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("updateSingleEvent").type("application/json")
                 .build();
@@ -158,19 +215,35 @@ public class CourseService {
     // Create a new course
     @POST
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response createCourse(Course newCourse) {
+    public Response createCourse(Course newCourse,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
         // If the hash value of the course object isn't a valid ObjectId-Hash-Value or the name is null return 400
         // The resource will automatically create a hash if it hasn't been set by the client
         if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getCourseName() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
+        // Set the path to the course's events
         URI pathToCourseEvents = uriInfo.getBaseUriBuilder().path("courses/" + newCourse.getHashId()
                 + "/events").build();
         newCourse.setEvents(pathToCourseEvents.toString());
 
         // Insert the course into the database
         courseDatabase.insertInto(newCourse);
+
         // Set the new location URI using the hash value as an index
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newCourse.getHashId()).build();
 
@@ -182,8 +255,22 @@ public class CourseService {
     @PUT
     @Path("{courseId}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateCourse(@PathParam ("courseId") String courseId, Course updatedCourse) {
-        // If the name is not set return 400. If the course to be updated can't be found return 404
+    public Response updateCourse(@PathParam ("courseId") String courseId, Course updatedCourse,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
+        // If the name is not set return 400. If the course to be updated can't be found return 404 as well
         if (updatedCourse.getCourseName() == null) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else if (courseDatabase.isNotInDatabase(courseId)) {
@@ -193,6 +280,7 @@ public class CourseService {
         // Give the new course the same hash as the old one
         updatedCourse.setHashId(courseId);
 
+        // Set the path to the course's events
         URI pathToCourseEvents = uriInfo.getBaseUriBuilder().path("courses/" + updatedCourse.getHashId()
                 + "/events").build();
         updatedCourse.setEvents(pathToCourseEvents.toString());
@@ -200,7 +288,7 @@ public class CourseService {
         // Update the course in the database
         courseDatabase.update(updatedCourse, courseId);
 
-        // Set the new header hyperlink to the next state
+        // Create the GET link
         Link link = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("getSingleCourse").type("application/json")
                 .build();
@@ -212,7 +300,21 @@ public class CourseService {
     // Delete a specific course
     @DELETE
     @Path("{courseId}")
-    public Response deleteCourse(@PathParam ("courseId") String courseId) {
+    public Response deleteCourse(@PathParam ("courseId") String courseId,
+                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Exit with WWW-Authenticate if wrong creds have been sent
+        if (tokenAndRole[0].equals("401")) {
+            return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
+        }
+
         // If the course can't be found return 404
         if (courseDatabase.isNotInDatabase(courseId)) {
             return Response.status(Response.Status.NOT_FOUND).build();
@@ -221,7 +323,7 @@ public class CourseService {
         // Delete the course from the database
         courseDatabase.delete(courseId);
 
-        // Set the new header hyperlink to the next state
+        // Create the GET link
         Link link = Link.fromUri(uriInfo.getBaseUri() + "courses")
                 .rel("getAllCourses").type("application/json")
                 .build();

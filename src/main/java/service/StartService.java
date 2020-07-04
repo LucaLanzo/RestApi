@@ -1,9 +1,13 @@
 package service;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import authorization.Authorization;
+import org.apache.tomcat.util.codec.binary.Base64;
+
+import javax.validation.constraints.NotNull;
+import javax.ws.rs.*;
 import javax.ws.rs.core.*;
+import java.io.IOException;
+import java.util.Objects;
 
 /***
  * By Luca Lanzo
@@ -17,7 +21,14 @@ public class StartService {
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getDispatcher() {
+    public Response getDispatcher(@HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        String[] tokenAndRole = new String[2];
+        try {
+            tokenAndRole = Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Link linkToCourses = Link.fromUri(uriInfo.getAbsolutePath() + "courses")
                 .rel("getAllCourses").type("application/json")
                 .build();
@@ -25,6 +36,14 @@ public class StartService {
                 .rel("getAllEvents").type("application/json")
                 .build();
 
-        return Response.noContent().links(linkToCourses, linkToEvents).build();
+        if (tokenAndRole[0].equals("401")) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .header("WWW-Authenticate", "Basic realm=/api/softskills")
+                    .build();
+        }
+
+        return Response.noContent().links(linkToCourses, linkToEvents)
+                .header("Authorization", "Bearer " + tokenAndRole[0])
+                .build();
     }
 }
