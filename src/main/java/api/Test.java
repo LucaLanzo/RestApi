@@ -7,10 +7,14 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import database.dao.EventDAO;
+import database.daoimpl.EventDAOImpl;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import resources.Course;
 import resources.Event;
+
+import java.util.List;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -21,24 +25,13 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 
 public class Test {
-    protected static ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
-    protected static CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
-    protected static CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
-            pojoCodecRegistry);
-    protected static MongoClientSettings clientSettings = MongoClientSettings.builder()
-            .applyConnectionString(connectionString)
-            .codecRegistry(codecRegistry)
-            .build();
-    protected static MongoClient mongoClient = MongoClients.create(clientSettings);
-    protected static MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
-
-
+    protected static EventDAO eventDatabase;
 
     public static void main(String[] args) {
-        MongoCollection<Course> courseDatabase = database.getCollection("courses", Course.class);
-        MongoCollection<Event> eventDatabase = database.getCollection("events", Event.class);
-
-        courseDatabase.drop();
-        eventDatabase.drop();
+         eventDatabase = new EventDAOImpl("events", Event.class);
+         List<Event> events = eventDatabase.getAll(0, 100);
+         for (Event e : events) {
+             System.out.println(e.getCourseId());
+         }
     }
 }

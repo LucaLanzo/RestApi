@@ -68,7 +68,7 @@ public class EventDAOImpl implements EventDAO {
     // READ
     public List<Event> getByAssociatedCourse(String courseLink, int offset, int size) {
         List<Event> allEventsWithSpecificCourse = new ArrayList<>();
-        for (Event event : collection.find(Filters.eq("course", courseLink)).skip(offset).limit(size)) {
+        for (Event event : collection.find(Filters.eq("courseId", courseLink)).skip(offset).limit(size)) {
             allEventsWithSpecificCourse.add(event);
         }
         return allEventsWithSpecificCourse;

@@ -21,7 +21,7 @@ public class Event {
     private int date;
     private int startTime;
     private int endTime;
-    private String course;
+    private String courseId;
     @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/events/${instance.hashId}", rel = "self",
             type = "application/json")
     private Link self;
@@ -74,12 +74,12 @@ public class Event {
     }
 
 
-    public String getCourse() {
-        return course;
+    public String getCourseId() {
+        return courseId;
     }
 
-    public void setCourse(String course) {
-        this.course = course;
+    public void setCourseId(String courseId) {
+        this.courseId = courseId;
     }
 
 

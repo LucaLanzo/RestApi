@@ -130,7 +130,6 @@ public class CourseService {
     }
 
 
-    // TODO: WHY CAN YOU QUERY FOR A NAME HERE??????
     // Get events of a specific course
     @GET
     @Path("{courseId}/events")
@@ -153,8 +152,9 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // Build a uri for the course
+        // Build a uri for the course for searching
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
+        System.out.println(uriToCourse.toString());
 
         // Get the total amount of Resources in the database
         int amountOfResources = eventDatabase.getAmountOfResources(uriToCourse.toString());

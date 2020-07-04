@@ -151,8 +151,9 @@ public class EventService {
         }
 
         // Set an absolute path on the course attribute of the new event
-        URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourse()).build();
-        newEvent.setCourse(pathToCourse.toString());
+        URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourseId()).build();
+        System.out.println(pathToCourse.toString());
+        newEvent.setCourseId(pathToCourse.toString());
 
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
