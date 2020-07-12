@@ -20,7 +20,7 @@ public class Authorization {
             return new String[]{("ADMIN CREDS PLEASE DELETE"), ("False")};
         }
 
-        // Returns 401 and False if wrong creds, and jwt and true if right creds and student
+        // Returns 401 and false if wrong creds --- returns jwt and true if right creds and student
         if (authBody.equals("")) {
             return new String[]{("401"), ("False")};
         }
@@ -53,7 +53,7 @@ public class Authorization {
     }
 
     public static javax.ws.rs.core.Response getWrongRoleResponse() {
-        // The built response for wrong role (e.g.: If you are not a student). Same as above with the class path
+        // The built response for wrong role (e.g.: You are not a student). Same as above with the class path
         return javax.ws.rs.core.Response.status(javax.ws.rs.core.Response.Status.FORBIDDEN)
                 .build();
     }

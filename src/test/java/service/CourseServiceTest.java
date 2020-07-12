@@ -1,15 +1,19 @@
 package service;
 
 import com.owlike.genson.Genson;
+import database.dao.CourseDAO;
+import database.dao.EventDAO;
 import database.daoimpl.CourseDAOImpl;
+import database.daoimpl.EventDAOImpl;
 import okhttp3.*;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import resources.Course;
+import resources.Event;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,17 +28,24 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static final CourseDAOImpl courseDatabase = new CourseDAOImpl("courses", Course.class);
+    private static final CourseDAO courseDatabase = new CourseDAOImpl("courses", Course.class);
+    private static final EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
     private Course testCourse;
+    private Event testEvent;
     private Genson builder;
     private OkHttpClient client;
+    private String authorizationCreds;
+
 
     @BeforeAll
     public void setUp() {
         builder = new Genson();
         client = new OkHttpClient();
+        authorizationCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
     }
 
+
+    // POST a course
     @Test
     @Order(1)
     public void createCourseTest() {
@@ -45,6 +56,7 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -62,6 +74,8 @@ public class CourseServiceTest {
         }
     }
 
+
+    // GET all courses
     @Test
     @Order(2)
     public void getAllCoursesTest() {
@@ -69,6 +83,7 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .get()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -85,6 +100,8 @@ public class CourseServiceTest {
         }
     }
 
+
+    // GET course by id
     @Test
     @Order(3)
     public void getCourseByIdTest() {
@@ -92,6 +109,7 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -108,6 +126,8 @@ public class CourseServiceTest {
         }
     }
 
+
+    // GET course by name
     @Test
     @Order(4)
     public void getCourseByNameTest() {
@@ -115,6 +135,7 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/?courseName=" + testCourse.getCourseName())
                     .get()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -131,8 +152,65 @@ public class CourseServiceTest {
         }
     }
 
+
+    // GET all the events from a specific course
     @Test
     @Order(5)
+    public void getAllEventsFromSpecificCourseTest() {
+        try {
+            testEvent = new Event(1200, 1400, 10120);
+            testEvent.setCourseId(BASE_URL + "/" + testCourse.getHashId());
+
+            eventDatabase.insertInto(testEvent);
+
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId() + "/events")
+                    .get()
+                    .header("Authorization", authorizationCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("1200"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+    // GET a specific event from a specific course
+    @Test
+    @Order(6)
+    public void getSpecificEventFromSpecificCourseTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId() + "/events/" + testEvent.getHashId())
+                    .get()
+                    .header("Authorization", authorizationCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("1200"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+    // PUT a course
+    @Test
+    @Order(7)
     public void updateCourseTest() {
         try {
             testCourse.setCourseName("TestcoursePutTest");
@@ -140,6 +218,7 @@ public class CourseServiceTest {
 
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
+                    .header("Authorization", authorizationCreds)
                     .put(requestBody)
                     .build();
 
@@ -152,23 +231,29 @@ public class CourseServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
             assertTrue(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }
     }
 
+
+    // DELETE a course
     @Test
-    @Order(6)
+    @Order(8)
     public void deleteCourseTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .delete()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -180,22 +265,30 @@ public class CourseServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
+                    .header("Authorization", authorizationCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
 
             assertFalse(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }
     }
 
+
     @AfterAll
     public void tearDown() {
-        List<Course> allCoursesByName = courseDatabase.getByName("Testcourse", 0, -1);
-        if (allCoursesByName.size() != 0) {
-            courseDatabase.delete(allCoursesByName.get(0).getHashId());
+        Course course = courseDatabase.getById(testCourse.getHashId());
+        if (course != null) {
+            courseDatabase.delete(testCourse.getHashId());
+        }
+        Event event = eventDatabase.getById(testEvent.getHashId());
+        if (event != null) {
+            eventDatabase.delete(testEvent.getHashId());
         }
     }
 }

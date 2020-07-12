@@ -30,8 +30,7 @@ public class EventService {
     // Get all events in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getAllEvents(@QueryParam("name") @DefaultValue("") String name,
-                                  @QueryParam("offset") @DefaultValue("0") int offset,
+    public Response getAllEvents(@QueryParam("offset") @DefaultValue("0") int offset,
                                   @QueryParam("size") @DefaultValue("10") int size,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
@@ -65,7 +64,7 @@ public class EventService {
                 .rel("createNewEvent").type("application/json")
                 .build();
 
-        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, "",
                 linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
@@ -141,10 +140,10 @@ public class EventService {
             return Authorization.getWrongRoleResponse();
         }
 
-        // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times are null
-        // return 400. The resource will automatically create a hash if it hasn't been set by the client
-        if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() == 0
-                || newEvent.getEndTime() == 0 || newEvent.getDate() == 0) {
+        // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times or date are
+        // wrong return 400. The resource will automatically create a hash if it hasn't been set by the client
+        if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() <= 0
+                || newEvent.getEndTime() <= 0 || newEvent.getDate() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -152,7 +151,7 @@ public class EventService {
 
         // Set an absolute path on the course attribute of the new event
         URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourseId()).build();
-        System.out.println(pathToCourse.toString());
+
         newEvent.setCourseId(pathToCourse.toString());
 
         // Insert the event into the database
@@ -189,7 +188,7 @@ public class EventService {
         }
 
         // If the name is not set return 400. If the event to be updated can't be found return 404
-        if (updatedEvent.getStartTime() == 0 || updatedEvent.getEndTime() == 0 || updatedEvent.getDate() == 0) {
+        if (updatedEvent.getStartTime() <= 0 || updatedEvent.getEndTime() <= 0 || updatedEvent.getDate() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();

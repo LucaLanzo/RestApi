@@ -28,10 +28,11 @@ public class Event {
 
     public Event() {}
 
-    public Event(int startTime, int endTime) {
+    public Event(int startTime, int endTime, int date) {
         this.hashId = ObjectId.get().toString();
         this.startTime = startTime;
         this.endTime = endTime;
+        this.date = date;
     }
 
 

@@ -189,8 +189,7 @@ public class CourseService {
     @GET
     @Path("/{courseId}/events/{eventId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getSpecificEventFromSpecificCourse(@PathParam("courseId") String courseId,
-                                                       @PathParam("eventId") String eventId,
+    public Response getSpecificEventFromSpecificCourse(@PathParam("eventId") String eventId,
                                                        @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
         String[] tokenAndRole = new String[2];
@@ -254,7 +253,8 @@ public class CourseService {
 
         // If the hash value of the course object isn't a valid ObjectId-Hash-Value or the name is null return 400
         // The resource will automatically create a hash if it hasn't been set by the client
-        if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getCourseName() == null) {
+        if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getCourseName().equals("")
+                || newCourse.getCourseDescription().equals("") || newCourse.getMaximumStudents() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -291,15 +291,17 @@ public class CourseService {
             e.printStackTrace();
         }
 
-        // Exit with WWW-Authenticate if wrong creds have been sent
+        // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         } else if (tokenAndRole[1].equals("True")) {
             return Authorization.getWrongRoleResponse();
         }
 
-        // If the name is not set return 400. If the course to be updated can't be found return 404 as well
-        if (updatedCourse.getCourseName() == null) {
+        // If all attributes of the updated course are default (= no changes) or maximumStudents is wrong return 400
+        // If the course to be updated can't be found return 404
+        if ((updatedCourse.getCourseName().equals("") && updatedCourse.getCourseName().equals("")
+        && updatedCourse.getMaximumStudents() == 0) || updatedCourse.getMaximumStudents() < 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();

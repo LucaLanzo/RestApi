@@ -8,5 +8,10 @@ services:
       - MONGO_INITDB_DATABASE=mongodbrest
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=adminpassword
+    volumes:
+      - mongoSoftSkillsDatabaseVolume:/data/db
     ports:
       - '27017-27019:27017-27019'
+volumes:
+  mongoSoftSkillsDatabaseVolume:
+    external: false
