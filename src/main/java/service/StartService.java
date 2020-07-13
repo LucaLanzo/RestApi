@@ -26,10 +26,10 @@ public class StartService {
             e.printStackTrace();
         }
 
-        Link linkToCourses = Link.fromUri(uriInfo.getAbsolutePath() + "courses")
+        Link linkToCourses = Link.fromUri(uriInfo.getAbsolutePath() + "/courses")
                 .rel("getAllCourses").type("application/json")
                 .build();
-        Link linkToEvents = Link.fromUri(uriInfo.getAbsolutePath() + "events")
+        Link linkToEvents = Link.fromUri(uriInfo.getAbsolutePath() + "/events")
                 .rel("getAllEvents").type("application/json")
                 .build();
 

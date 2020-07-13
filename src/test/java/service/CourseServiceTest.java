@@ -158,7 +158,7 @@ public class CourseServiceTest {
     @Order(5)
     public void getAllEventsFromSpecificCourseTest() {
         try {
-            testEvent = new Event(1200, 1400, 10120);
+            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--18:00:00");
             testEvent.setCourseId(BASE_URL + "/" + testCourse.getHashId());
 
             eventDatabase.insertInto(testEvent);
@@ -170,11 +170,11 @@ public class CourseServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-
+            System.out.println(response.code());
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("1200"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -199,7 +199,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("1200"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");

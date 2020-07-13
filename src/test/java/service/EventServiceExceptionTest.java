@@ -37,12 +37,12 @@ public class EventServiceExceptionTest {
     }
 
 
-    // POST with wrong startTime. RETURN CODE 400
+    // POST with missing startTime/endTime. RETURN CODE 400
     @Test
     @Order(1)
-    public void createEventWithWrongStartTimeTest() {
+    public void createEventWithNoTimeTest() {
         try {
-            testEvent = new Event(-1, 1200, 10120);
+            testEvent = new Event();
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -66,12 +66,12 @@ public class EventServiceExceptionTest {
     }
 
 
-    // POST with wrong endTime. RETURN CODE 400
+    // POST with wrong time format. RETURN CODE 400
     @Test
     @Order(2)
-    public void createEventWithWrongEndTimeTest() {
+    public void createEventWithWrongTimeFormatTest() {
         try {
-            testEvent = new Event(1000, -1, 10120);
+            testEvent = new Event("bla", "bla");
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -95,12 +95,12 @@ public class EventServiceExceptionTest {
     }
 
 
-    // POST with wrong date. RETURN CODE 400
+    // POST with wrong startTime after endTime. RETURN CODE 400
     @Test
     @Order(3)
-    public void createEventWithWrongDateTest() {
+    public void createEventWithStartAfterEndTest() {
         try {
-            testEvent = new Event(1000, 1200, -1);
+            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--16:00:00");
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -150,101 +150,12 @@ public class EventServiceExceptionTest {
     }
 
 
-    // PUT a default event (= all attributes left empty). RESPONSE CODE 400
+    // PUT with missing startTime/endTime. RESPONSE CODE 400
     @Test
     @Order(5)
-    public void updateEventWithDefaultsTest() {
-        try {
-            testEvent.setStartTime(0);
-            testEvent.setEndTime(0);
-            testEvent.setDate(0);
-            RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
-
-            Request request = new Request.Builder()
-                    .url(BASE_URL + "/" + testEvent.getHashId())
-                    .put(requestBody)
-                    .header("Authorization", authorizationCreds)
-                    .build();
-
-            Response response = client.newCall(request).execute();
-
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server.");
-        } catch (IOException e) {
-            fail("Call to the Server couldn't be made. Is the server not running?");
-        }
-    }
-
-
-    // PUT with an invalid startTime. RESPONSE CODE 400
-    @Test
-    @Order(6)
     public void updateEventWithWrongStartTimeTest() {
         try {
-            testEvent.setStartTime(-1);
-            RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
-
-            Request request = new Request.Builder()
-                    .url(BASE_URL + "/" + testEvent.getHashId())
-                    .put(requestBody)
-                    .header("Authorization", authorizationCreds)
-                    .build();
-
-            Response response = client.newCall(request).execute();
-
-            if(response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server.");
-        } catch (IOException e) {
-            fail("Call to the Server couldn't be made. Is the server not running?");
-        }
-    }
-
-
-    // PUT with an invalid endTime. RESPONSE CODE 400
-    @Test
-    @Order(7)
-    public void updateEventWithWrongEndTimeTest() {
-        try {
-            testEvent.setEndTime(-1);
-            RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
-
-            Request request = new Request.Builder()
-                    .url(BASE_URL + "/" + testEvent.getHashId())
-                    .put(requestBody)
-                    .header("Authorization", authorizationCreds)
-                    .build();
-
-            Response response = client.newCall(request).execute();
-
-            if(response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server.");
-        } catch (IOException e) {
-            fail("Call to the Server couldn't be made. Is the server not running?");
-        }
-    }
-
-
-    // PUT with an invalid date. RESPONSE CODE 400
-    @Test
-    @Order(8)
-    public void updateEventWithWrongDateTest() {
-        try {
-            testEvent.setDate(-1);
+            testEvent = new Event();
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -270,10 +181,10 @@ public class EventServiceExceptionTest {
 
     // PUT with an event that is not in the database. RESPONSE CODE 404
     @Test
-    @Order(9)
+    @Order(6)
     public void updateEventThatIsNotInDatabaseTest() {
         try {
-            testEvent = new Event(1000, 1200, 101020);
+            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--20:00:00");
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -299,7 +210,7 @@ public class EventServiceExceptionTest {
 
     // DELETE an event that is not in database. RESPONSE CODE 404
     @Test
-    @Order(10)
+    @Order(7)
     public void deleteEventTest() {
         try {
             Request request = new Request.Builder()

@@ -40,52 +40,54 @@ public class CourseDAOImpl implements CourseDAO {
     }
 
 
+    // READ
+    @Override
     public List<Course> getAll(int offset, int size) {
         List<Course> allCourses = new ArrayList<>();
-        try (MongoCursor<Course> cursor = collection.find().skip(offset).limit(size).iterator()) {
-            while(cursor.hasNext()) {
-                allCourses.add(cursor.next());
-            }
+        for (Course course : collection.find().skip(offset).limit(size)) {
+            allCourses.add(course);
         }
         return allCourses;
     }
 
+    // READ
+    @Override
     public List<Course> getByName(String name, int offset, int size) {
-        MongoCursor<Course> cursor = collection.find(Filters.eq("courseName", name)).skip(offset).limit(size).cursor();
         List<Course> allFoundCourses = new ArrayList<>();
-        while(cursor.hasNext()) {
-            allFoundCourses.add(cursor.next());
+        for (Course course : collection.find(Filters.eq("courseName", name)).skip(offset).limit(size)) {
+            allFoundCourses.add(course);
         }
         return allFoundCourses;
     }
 
+    // READ
+    @Override
     public Course getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
+    // CREATE
+    @Override
     public void insertInto(Course newCourse) {
         collection.insertOne(newCourse);
     }
 
+    // UPDATE
+    @Override
     public void update(Course updatedCourse, String id) {
         collection.replaceOne(Filters.eq("_id", id), updatedCourse);
     }
 
+    // DELETE
+    @Override
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
 
 
+    @Override
     public boolean isNotInDatabase(String id) {
         Course course = getById(id);
         return course == null;
-    }
-
-    public int getAmountOfResources(String courseName) {
-        return (int) collection.countDocuments(Filters.eq("courseName", courseName));
-    }
-
-    public int getAmountOfResources() {
-        return (int) collection.countDocuments();
     }
 }

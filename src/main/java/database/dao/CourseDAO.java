@@ -17,6 +17,4 @@ public interface CourseDAO {
     void delete(String id);
 
     boolean isNotInDatabase(String id);
-    int getAmountOfResources(String courseName);
-    int getAmountOfResources();
 }

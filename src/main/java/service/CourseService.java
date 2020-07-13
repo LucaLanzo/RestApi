@@ -39,23 +39,12 @@ public class CourseService {
                                   @QueryParam("size") @DefaultValue("10") int size,
                                   @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
-
-        // Get the total amount of Resources in the database
-        int amountOfResources;
-        if (name.equals("")) amountOfResources = courseDatabase.getAmountOfResources();
-        else amountOfResources = courseDatabase.getAmountOfResources(name);
-
 
         // Get all courses or all courses by specific name from the database
         List<Course> allCourses;
@@ -73,12 +62,12 @@ public class CourseService {
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("createNewCourse").type("application/json")
                 .build();
-        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, allCourses.size(), name,
                 linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Course>>(allCourses) {})
                 .links(linksForPaginationAndPost)
-                .header("X-totalAmountOfCourses", amountOfResources)
+                .header("X-totalAmountOfCourses", allCourses.size())
                 .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
     }
@@ -91,12 +80,7 @@ public class CourseService {
     public Response getCourseById(@PathParam("courseId") String courseId,
                                   @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -135,17 +119,13 @@ public class CourseService {
     @Path("{courseId}/events")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllEventsOfSpecificCourse(@PathParam("courseId") String courseId,
-                                                 @QueryParam("name") @DefaultValue("") String name,
+                                                 @QueryParam("from") @DefaultValue("") String startTime,
+                                                 @QueryParam("to") @DefaultValue("") String endTime,
                                                  @QueryParam("offset") @DefaultValue("0") int offset,
                                                  @QueryParam("size") @DefaultValue("10") int size,
                                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -154,14 +134,18 @@ public class CourseService {
 
         // Build a uri for the course for searching
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
-        System.out.println(uriToCourse.toString());
-
-        // Get the total amount of Resources in the database
-        int amountOfResources = eventDatabase.getAmountOfResources(uriToCourse.toString());
 
         // Get all events for the chosen course
-        List<Event> allEventsWithSpecificCourse =
-                eventDatabase.getByAssociatedCourse(uriToCourse.toString(), offset, size);
+        List<Event> allEventsWithSpecificCourse;
+        if (startTime.equals("") && endTime.equals("")) {
+            allEventsWithSpecificCourse = eventDatabase.getAll(offset, size);
+        } else if (startTime.equals("")) {
+            allEventsWithSpecificCourse = eventDatabase.getByStartTime(startTime, offset, size);
+        } else if (endTime.equals("")) {
+            allEventsWithSpecificCourse = eventDatabase.getByEndTime(endTime, offset, size);
+        } else {
+            allEventsWithSpecificCourse = eventDatabase.getByTimeframe(startTime, endTime, uriToCourse.toString(), offset, size);
+        }
 
         // If no events have been found return 404 else display all events
         if (allEventsWithSpecificCourse.size() == 0) {
@@ -174,12 +158,12 @@ public class CourseService {
         Link linkForPost = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("createNewEvent").type("application/json")
                 .build();
-        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, name,
-                linkForPost);
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset,
+                allEventsWithSpecificCourse.size(), "", linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEventsWithSpecificCourse) {})
                 .links(linksForPaginationAndPost)
-                .header("X-totalAmountOfEvents", amountOfResources)
+                .header("X-totalAmountOfEvents", allEventsWithSpecificCourse.size())
                 .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
     }
@@ -192,12 +176,7 @@ public class CourseService {
     public Response getSpecificEventFromSpecificCourse(@PathParam("eventId") String eventId,
                                                        @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -215,13 +194,13 @@ public class CourseService {
         }
 
         // Create PUT, DELETE and GET links
-        Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
+        Link linkToPut = Link.fromUri(uriInfo.getBaseUri() + "events/" + event.getHashId())
                 .rel("updateSingleEvent").type("application/json")
                 .build();
-        Link linkToDelete = Link.fromUri(uriInfo.getAbsolutePath())
+        Link linkToDelete = Link.fromUri(uriInfo.getBaseUri() + "events/" + event.getHashId())
                 .rel("deleteSingleEvent").type("application/json")
                 .build();
-        Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "event")
+        Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("getAllEvents").type("application/json")
                 .build();
 
@@ -237,12 +216,7 @@ public class CourseService {
     public Response createCourse(Course newCourse,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
@@ -284,12 +258,7 @@ public class CourseService {
     public Response updateCourse(@PathParam ("courseId") String courseId, Course updatedCourse,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
@@ -323,11 +292,11 @@ public class CourseService {
         courseDatabase.update(updatedCourse, courseId);
 
         // Create the GET link
-        Link link = Link.fromUri(uriInfo.getAbsolutePath())
+        Link linkToGet = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("getSingleCourse").type("application/json")
                 .build();
 
-        return Response.noContent().links(link)
+        return Response.noContent().links(linkToGet)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
     }
@@ -339,12 +308,7 @@ public class CourseService {
     public Response deleteCourse(@PathParam ("courseId") String courseId,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -364,12 +328,24 @@ public class CourseService {
         courseDatabase.delete(courseId);
 
         // Create the GET link
-        Link link = Link.fromUri(uriInfo.getBaseUri() + "courses")
+        Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "courses")
                 .rel("getAllCourses").type("application/json")
                 .build();
 
-        return Response.noContent().links(link)
+        return Response.noContent().links(linkToGetAll)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
+    }
+
+
+    public static String[] authorizeUser(String authBody) {
+        try {
+            return Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // If there is an IOException return 401 to make sure the CRUDs block the request with a
+        // WWW-Authenticate-Header response
+        return new String[]{("401"), ("False")};
     }
 }

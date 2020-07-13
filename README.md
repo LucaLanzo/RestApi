@@ -12,10 +12,10 @@ After installing go to the directory of this project and type (-d flag to run da
 
 Default database username: admin\
 Default database password: adminpassword\
-Docker will create volume to keep the database saved under the name:\
+Docker will create volume to keep the database saved under the docker volume name:\
 "pvsexamss2020restapi_mongoSoftSkillsDatabaseVolume"
 
-
+\
 \
 __To run the server:__
 
@@ -28,7 +28,8 @@ This builds the jar to the directory 'target'. Change directory to 'target' and 
 This will run the server.
 
 \
-To POST a course ressource:
+\
+__To POST a course ressource:__
 ```
 {
     "courseName":"Teammanagement",
@@ -37,11 +38,11 @@ To POST a course ressource:
 }
 ```
 
-To POST an event ressource:
+__To POST an event ressource:__
 ```
 {
-    "startTime":"",
-    "endTime":"",
+    "startTime":"2020-07-18--18:00:00",
+    "endTime":"2020-07-18--20:00:00",
     "courseId":"5f0b776b1b0edf0238c0f502"
 }
 ```

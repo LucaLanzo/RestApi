@@ -30,29 +30,31 @@ public class EventService {
     // Get all events in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getAllEvents(@QueryParam("offset") @DefaultValue("0") int offset,
-                                  @QueryParam("size") @DefaultValue("10") int size,
+    public Response getAllEvents(@QueryParam("from") @DefaultValue("") String startTime,
+                                 @QueryParam("to") @DefaultValue("") String endTime,
+                                 @QueryParam("offset") @DefaultValue("0") int offset,
+                                 @QueryParam("size") @DefaultValue("10") int size,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
         }
 
-        // Get amount of events in the database
-        int amountOfResources = eventDatabase.getAmountOfResources();
+        List<Event> allEvents;
+        if (startTime.equals("") && endTime.equals("")) {
+            allEvents = eventDatabase.getAll(offset, size);
+        } else if (startTime.equals("")) {
+            allEvents = eventDatabase.getByStartTime(startTime, offset, size);
+        } else if (endTime.equals("")) {
+            allEvents = eventDatabase.getByEndTime(endTime, offset, size);
+        } else {
+            allEvents = eventDatabase.getByTimeframe(startTime, endTime, "", offset, size);
+        }
 
-        // Get all courses or all courses by specific name from the database
-        List<Event> allEvents = eventDatabase.getAll(offset, size);
-
-        // If no courses have been found return 404 else display all courses
+        // If no events have been found return 404 else display all events
         if (allEvents.size() == 0) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
@@ -64,12 +66,12 @@ public class EventService {
                 .rel("createNewEvent").type("application/json")
                 .build();
 
-        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, amountOfResources, "",
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, allEvents.size(), "",
                 linkForPost);
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
                 .links(linksForPaginationAndPost)
-                .header("X-totalAmountOfEvents", amountOfResources)
+                .header("X-totalAmountOfEvents", allEvents.size())
                 .build();
     }
 
@@ -81,12 +83,7 @@ public class EventService {
     public Response getEventById(@PathParam("id") String eventId,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -110,7 +107,7 @@ public class EventService {
         Link linkToDelete = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("deleteSingleEvent").type("application/json")
                 .build();
-        Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "event")
+        Link linkToGetAll = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("getAllEvents").type("application/json")
                 .build();
 
@@ -126,12 +123,7 @@ public class EventService {
     public Response createEvent(Event newEvent,
                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -142,17 +134,18 @@ public class EventService {
 
         // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times or date are
         // wrong return 400. The resource will automatically create a hash if it hasn't been set by the client
-        if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() <= 0
-                || newEvent.getEndTime() <= 0 || newEvent.getDate() <= 0) {
+        if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() == null
+                || newEvent.getEndTime() == null ||
+                eventDatabase.startIsAfterEndOrWrongFormat(newEvent.getStartTime(), newEvent.getEndTime())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
 
         // Set an absolute path on the course attribute of the new event
-        URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourseId()).build();
+        URI pathToEvent = uriInfo.getBaseUriBuilder().path("events/" + newEvent.getCourseId()).build();
 
-        newEvent.setCourseId(pathToCourse.toString());
+        newEvent.setCourseId(pathToEvent.toString());
 
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
@@ -170,15 +163,10 @@ public class EventService {
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateCourse(@PathParam("id") String eventId, Event updatedEvent,
+    public Response updateEvent(@PathParam("id") String eventId, Event updatedEvent,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -188,7 +176,8 @@ public class EventService {
         }
 
         // If the name is not set return 400. If the event to be updated can't be found return 404
-        if (updatedEvent.getStartTime() <= 0 || updatedEvent.getEndTime() <= 0 || updatedEvent.getDate() <= 0) {
+        if (updatedEvent.getStartTime() == null || updatedEvent.getEndTime() == null ||
+                eventDatabase.startIsAfterEndOrWrongFormat(updatedEvent.getStartTime(), updatedEvent.getEndTime())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -221,12 +210,7 @@ public class EventService {
     public Response deleteEvent(@PathParam("id") String eventId,
                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
-        String[] tokenAndRole = new String[2];
-        try {
-            tokenAndRole = Authorization.authorizeUser(authBody);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
@@ -253,5 +237,17 @@ public class EventService {
         return Response.noContent().links(link)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
                 .build();
+    }
+
+
+    public static String[] authorizeUser(String authBody) {
+        try {
+            return Authorization.authorizeUser(authBody);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // If there is an IOException return 401 to make sure the CRUDs block the request with a
+        // WWW-Authenticate-Header response
+        return new String[]{("401"), ("False")};
     }
 }

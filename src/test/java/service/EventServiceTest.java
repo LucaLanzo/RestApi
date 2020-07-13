@@ -42,7 +42,7 @@ public class EventServiceTest {
     @Order(1)
     public void createEventTest() {
         try {
-            testEvent = new Event(1000, 1200, 10120);
+            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--20:00:00");
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -83,7 +83,7 @@ public class EventServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("1000"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -109,7 +109,7 @@ public class EventServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("1000"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -124,7 +124,7 @@ public class EventServiceTest {
     @Order(4)
     public void updateEventTest() {
         try {
-            testEvent.setStartTime(800);
+            testEvent.setStartTime("2020-07-18--19:00:00");
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
@@ -147,7 +147,7 @@ public class EventServiceTest {
 
             response = client.newCall(request).execute();
 
-            assertTrue(Objects.requireNonNull(response.body()).string().contains("800"));
+            assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--19:00:00"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -182,7 +182,7 @@ public class EventServiceTest {
             response = client.newCall(request).execute();
 
 
-            assertFalse(Objects.requireNonNull(response.body()).string().contains("800"));
+            assertFalse(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {

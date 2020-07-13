@@ -1,8 +1,25 @@
 package api;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import database.dao.EventDAO;
+import database.daoimpl.EventDAOImpl;
 import okhttp3.*;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
+import resources.Event;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /***
  * By Luca Lanzo
@@ -10,27 +27,23 @@ import java.io.IOException;
 
 
 public class AuthTest {
-    private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final static String BASE_URL = "https://api.fiw.fhws.de/auth/api/users/me";
+    protected static ConnectionString connectionString = new ConnectionString("mongodb://admin:adminpassword@localhost:27017");
 
-    public static void main(String[] args) throws IOException {
-        OkHttpClient client = createAuthenticatedClient("k46471", "Mnihup@21");
+    protected static CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
+    protected static CodecRegistry codecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
+            pojoCodecRegistry);
+    protected static MongoClientSettings clientSettings = MongoClientSettings.builder()
+            .applyConnectionString(connectionString)
+            .codecRegistry(codecRegistry)
+            .build();
+    protected static MongoClient mongoClient = MongoClients.create(clientSettings);
 
-        Request request = new Request.Builder()
-                .url(BASE_URL)
-                .build();
+    protected static MongoDatabase database = mongoClient.getDatabase("softSkillsDatabase");
+    protected static MongoCollection<Event> collection;
 
-        Response response = client.newCall(request).execute();
 
-        System.out.println(request.header("Authorization"));
-        System.out.println();
-        System.out.println(response.header("X-fhws-jwt-token"));
-    }
-
-    private static OkHttpClient createAuthenticatedClient(String username, String password) {
-       return new OkHttpClient.Builder().authenticator((route, response) -> {
-           String credential = Credentials.basic(username, password);
-           return response.request().newBuilder().header("Authorization", credential).build();
-       }).build();
+    public static void main (String [] args) {
+        collection = database.getCollection("events", Event.class);
+        collection.drop();
     }
 }
