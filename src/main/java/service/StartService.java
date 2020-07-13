@@ -19,7 +19,7 @@ public class StartService {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getDispatcher(@HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        String[] tokenAndRole = new String[2];
+        String[] tokenAndRole = new String[3];
         try {
             tokenAndRole = Authorization.authorizeUser(authBody);
         } catch (IOException e) {

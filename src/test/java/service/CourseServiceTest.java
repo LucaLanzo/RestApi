@@ -34,14 +34,16 @@ public class CourseServiceTest {
     private Event testEvent;
     private Genson builder;
     private OkHttpClient client;
-    private String authorizationCreds;
+    private String adminCreds;
+    private String studentCreds;
 
 
     @BeforeAll
     public void setUp() {
         builder = new Genson();
         client = new OkHttpClient();
-        authorizationCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        studentCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
     }
 
 
@@ -56,7 +58,7 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -75,15 +77,15 @@ public class CourseServiceTest {
     }
 
 
-    // GET all courses
+    // GET all courses as admin
     @Test
     @Order(2)
-    public void getAllCoursesTest() {
+    public void getAllCoursesAsAdminTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -91,7 +93,33 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testCourse.getHashId()));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // GET all courses as student
+    @Test
+    @Order(3)
+    public void getAllCoursesAsStudentTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL)
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -103,13 +131,13 @@ public class CourseServiceTest {
 
     // GET course by id
     @Test
-    @Order(3)
+    @Order(4)
     public void getCourseByIdTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -117,7 +145,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -129,13 +157,13 @@ public class CourseServiceTest {
 
     // GET course by name
     @Test
-    @Order(4)
+    @Order(5)
     public void getCourseByNameTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/?courseName=" + testCourse.getCourseName())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -143,7 +171,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("Testcourse"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -155,7 +183,7 @@ public class CourseServiceTest {
 
     // GET all the events from a specific course
     @Test
-    @Order(5)
+    @Order(6)
     public void getAllEventsFromSpecificCourseTest() {
         try {
             testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--18:00:00");
@@ -166,15 +194,15 @@ public class CourseServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId() + "/events")
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
-            System.out.println(response.code());
+
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testEvent.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -185,13 +213,13 @@ public class CourseServiceTest {
 
     // GET a specific event from a specific course
     @Test
-    @Order(6)
+    @Order(7)
     public void getSpecificEventFromSpecificCourseTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId() + "/events/" + testEvent.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -199,7 +227,7 @@ public class CourseServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testCourse.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -210,7 +238,7 @@ public class CourseServiceTest {
 
     // PUT a course
     @Test
-    @Order(7)
+    @Order(8)
     public void updateCourseTest() {
         try {
             testCourse.setCourseName("TestcoursePutTest");
@@ -218,7 +246,7 @@ public class CourseServiceTest {
 
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .put(requestBody)
                     .build();
 
@@ -231,12 +259,13 @@ public class CourseServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
-            assertTrue(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
+            String body = Objects.requireNonNull(response.body()).string();
+            assertTrue(body.contains(testCourse.getHashId()) && body.contains("TestcoursePutTest"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -247,13 +276,13 @@ public class CourseServiceTest {
 
     // DELETE a course
     @Test
-    @Order(8)
+    @Order(9)
     public void deleteCourseTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .delete()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -265,13 +294,13 @@ public class CourseServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
-
-            assertFalse(Objects.requireNonNull(response.body()).string().contains("TestcoursePutTest"));
+            String body = Objects.requireNonNull(response.body()).string();
+            assertFalse(body.contains(testCourse.getHashId()) && body.contains("TestcoursePutTest"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {

@@ -68,7 +68,7 @@ public class CourseServiceExceptionTest {
     }
 
 
-    // POST with missing courseName. RETURN CODE 400
+    // POST with missing courseDescription. RETURN CODE 400
     @Test
     @Order(2)
     public void createCourseWithoutDescriptionTest() {
@@ -156,61 +156,9 @@ public class CourseServiceExceptionTest {
     }
 
 
-    // GET a course name that is not in the database. RETURN CODE 404
-    @Test
-    @Order(5)
-    public void getCourseNameNotInDatabaseTest() {
-        try {
-            Request request = new Request.Builder()
-                    .url(BASE_URL + "/?courseName=" + "CourseNameThatIsNotInDatabase")
-                    .get()
-                    .header("Authorization", authorizationCreds)
-                    .build();
-
-            Response response = client.newCall(request).execute();
-
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server");
-        } catch (IOException e) {
-            fail("Call to the Server couldn't be made. Is the server not running?");
-        }
-    }
-
-
-    // GET all events from specific course but it doesn't have any events yet. RESPONSE CODE 404
-    @Test
-    @Order(6)
-    public void getAllEventsFromSpecificCourseButNoEventsInDatabaseTest() {
-        try {
-            Request request = new Request.Builder()
-                    .url(BASE_URL + "/" + testCourse.getHashId() + "/events")
-                    .get()
-                    .header("Authorization", authorizationCreds)
-                    .build();
-
-            Response response = client.newCall(request).execute();
-
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
-        } catch (NullPointerException e) {
-            fail("No response body has been sent by the server");
-        } catch (IOException e) {
-            fail("Call to the Server couldn't be made. Is the server not running?");
-        }
-    }
-
-
     // GET a specific event from specific course but the specific event can't be found. RESPONSE CODE 404
     @Test
-    @Order(7)
+    @Order(5)
     public void getSpecificEventFromSpecificCourseButNoEventInDatabaseTest() {
         try {
             Request request = new Request.Builder()
@@ -236,7 +184,7 @@ public class CourseServiceExceptionTest {
 
     // PUT a default course (= all attributes left empty). RESPONSE CODE 400
     @Test
-    @Order(8)
+    @Order(6)
     public void updateCourseWithDefaultsTest() {
         try {
             testCourse.setCourseName("");
@@ -267,7 +215,7 @@ public class CourseServiceExceptionTest {
 
     // PUT with an invalid maxStudents. RESPONSE CODE 400
     @Test
-    @Order(9)
+    @Order(7)
     public void updateCourseWithInvalidMaxStudentsTest() {
         try {
             testCourse.setMaximumStudents(-1);
@@ -296,7 +244,7 @@ public class CourseServiceExceptionTest {
 
     // PUT with a course that is not in the database. RESPONSE CODE 404
     @Test
-    @Order(10)
+    @Order(8)
     public void updateCourseThatIsNotInDatabaseTest() {
         try {
             testCourse = new Course("TestcoursePutTest", "A test course for JUnit",
@@ -328,7 +276,7 @@ public class CourseServiceExceptionTest {
 
     // DELETE a course that is not in database. RESPONSE CODE 404
     @Test
-    @Order(11)
+    @Order(9)
     public void deleteCourseTest() {
         try {
             Request request = new Request.Builder()

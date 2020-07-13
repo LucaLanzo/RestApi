@@ -15,6 +15,7 @@ import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URI;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -51,11 +52,9 @@ public class CourseService {
         if (name.equals("")) allCourses = courseDatabase.getAll(offset, size);
         else allCourses = courseDatabase.getByName(name, offset, size);
 
-        // If no courses have been found return 404 else display all courses
-        if (allCourses.size() == 0) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .header("Authorization", "Bearer " + tokenAndRole[0])
-                    .build();
+        // If the offset is bigger than the amount of courses, return an empty list
+        if (offset > allCourses.size()) {
+            allCourses = new ArrayList<>();
         }
 
         // Create the POST and Pagination links
@@ -87,15 +86,15 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // Get the course from the database
-        Course course = courseDatabase.getById(courseId);
-
         // If no course has been found by that id return 404 else display course with header hyperlinks to next state
-        if (course == null) {
+        if (courseDatabase.isNotInDatabase(courseId)) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
+
+        // Get the course from the database
+        Course course = courseDatabase.getById(courseId);
 
         // Create the PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
@@ -135,23 +134,25 @@ public class CourseService {
         // Build a uri for the course for searching
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
-        // Get all events for the chosen course
+        // Get all courses in the timeFrame
         List<Event> allEventsWithSpecificCourse;
-        if (startTime.equals("") && endTime.equals("")) {
+        if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
+            allEventsWithSpecificCourse = new ArrayList<>();
+        } else if (startTime.equals("") && endTime.equals("")) {
             allEventsWithSpecificCourse = eventDatabase.getAll(offset, size);
         } else if (startTime.equals("")) {
-            allEventsWithSpecificCourse = eventDatabase.getByStartTime(startTime, offset, size);
-        } else if (endTime.equals("")) {
             allEventsWithSpecificCourse = eventDatabase.getByEndTime(endTime, offset, size);
+        } else if (endTime.equals("")) {
+            allEventsWithSpecificCourse = eventDatabase.getByStartTime(startTime, offset, size);
         } else {
-            allEventsWithSpecificCourse = eventDatabase.getByTimeframe(startTime, endTime, uriToCourse.toString(), offset, size);
+            allEventsWithSpecificCourse = eventDatabase.getByTimeframe(startTime, endTime, uriToCourse.toString()
+                    , offset, size);
         }
 
-        // If no events have been found return 404 else display all events
-        if (allEventsWithSpecificCourse.size() == 0) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .header("Authorization", "Bearer " + tokenAndRole[0])
-                    .build();
+
+        // If the offset is bigger than the amount of events, return an empty list
+        if (offset > allEventsWithSpecificCourse.size()) {
+            allEventsWithSpecificCourse = new ArrayList<>();
         }
 
         // Create the POST and Pagination links
@@ -221,7 +222,7 @@ public class CourseService {
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
-        } else if (tokenAndRole[1].equals("True")) {
+        } else if (tokenAndRole[1].equals("student")) {
             return Authorization.getWrongRoleResponse();
         }
 
@@ -263,14 +264,13 @@ public class CourseService {
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
-        } else if (tokenAndRole[1].equals("True")) {
+        } else if (tokenAndRole[1].equals("student")) {
             return Authorization.getWrongRoleResponse();
         }
 
         // If all attributes of the updated course are default (= no changes) or maximumStudents is wrong return 400
         // If the course to be updated can't be found return 404
-        if ((updatedCourse.getCourseName().equals("") && updatedCourse.getCourseName().equals("")
-        && updatedCourse.getMaximumStudents() == 0) || updatedCourse.getMaximumStudents() < 0) {
+        if (updatedCourse.getCourseName().equals("") || updatedCourse.getMaximumStudents() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -313,7 +313,7 @@ public class CourseService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
-        } else if (tokenAndRole[1].equals("True")) {
+        } else if (tokenAndRole[1].equals("student")) {
             return Authorization.getWrongRoleResponse();
         }
 
@@ -346,6 +346,6 @@ public class CourseService {
         }
         // If there is an IOException return 401 to make sure the CRUDs block the request with a
         // WWW-Authenticate-Header response
-        return new String[]{("401"), ("False")};
+        return new String[]{("401"), ("other"), ("")};
     }
 }

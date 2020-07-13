@@ -75,6 +75,7 @@ public class CourseDAOImpl implements CourseDAO {
     // UPDATE
     @Override
     public void update(Course updatedCourse, String id) {
+
         collection.replaceOne(Filters.eq("_id", id), updatedCourse);
     }
 

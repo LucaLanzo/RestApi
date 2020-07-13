@@ -1,13 +1,10 @@
 package service;
 
-import com.owlike.genson.Genson;
-import database.daoimpl.CourseDAOImpl;
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
-import resources.Course;
 
 import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,12 +20,14 @@ public class StartServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills";
     private OkHttpClient client;
-    private String authorizationCreds;
+    private String adminCreds;
+    private String studentCreds;
 
     @BeforeAll
     public void setUp() {
         client = new OkHttpClient();
-        authorizationCreds = "Basic " + Base64.encodeBase64String("wrongUser:wrongPassword".getBytes());
+        adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        studentCreds = "Basic " + Base64.encodeBase64String("student:student".getBytes());
     }
 
 
@@ -44,11 +43,7 @@ public class StartServiceTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 401) {
-                fail("Response code should have been 401");
-            } else {
-                assertEquals(401, response.code());
-            }
+            assertEquals(401, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -64,16 +59,12 @@ public class StartServiceTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", Base64.encodeBase64String("absolutely:wrong".getBytes()))
                     .build();
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 401) {
-                fail("Response code should have been 401");
-            } else {
-                assertEquals(401, response.code());
-            }
+            assertEquals(401, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -81,8 +72,43 @@ public class StartServiceTest {
         }
     }
 
+    // Test the server with admin creds
+    @Test
+    public void accessServerWithAdminCreds() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL)
+                    .get()
+                    .header("Authorization", adminCreds)
+                    .build();
 
-    // I would normally test to "POST/PUT/DELETE with wrong role" here but that would mean that I would have to hardcode
-    // my fhws student login credentials so I am not going to do that. And testing against the login api doesn't really
-    // make any sense here as I am trying to test my own server.
+            Response response = client.newCall(request).execute();
+
+            assertEquals(204, response.code());
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+    // Test the server with student creds
+    @Test
+    public void accessServerWithStudentCreds() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL)
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            assertEquals(204, response.code());
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
 }

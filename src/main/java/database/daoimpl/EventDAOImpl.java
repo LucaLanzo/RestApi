@@ -76,7 +76,7 @@ public class EventDAOImpl implements EventDAO {
 
     // READ
     @Override
-    public List<Event> getByTimeframe(String startTime, String endTime, String courseId, int offset, int size) {
+    public List<Event> getByTimeframe(String startTime, String endTime, String courseLink, int offset, int size) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
 
         try {
@@ -88,8 +88,8 @@ public class EventDAOImpl implements EventDAO {
                 return new ArrayList<>();
             // if startTime is the same time as the endTime
             } else if (startTimeDate.compareTo(endTimeDate) == 0) {
-                if (!courseId.equals("")) {
-                    return getSameTimesWithSpecificCourse(startTime, endTime, courseId, offset, size);
+                if (!courseLink.equals("")) {
+                    return getSameTimesWithSpecificCourse(startTime, endTime, courseLink, offset, size);
                 } else {
                     return getSameTimes(startTime, endTime, offset, size);
                 }
@@ -97,8 +97,8 @@ public class EventDAOImpl implements EventDAO {
             // if startTime is sooner than endTime
             } else {
                 List<Event> allEvents;
-                if (!courseId.equals("")) {
-                    allEvents = getByAssociatedCourse(courseId, offset, size);
+                if (!courseLink.equals("")) {
+                    allEvents = getByAssociatedCourse(courseLink, offset, size);
                 } else {
                     allEvents = getAll(offset, size);
                 }
@@ -109,15 +109,15 @@ public class EventDAOImpl implements EventDAO {
                     Date endTimeDateFoundEvent = sdf.parse(event.getEndTime());
 
                     // The startTime of event is on or after the query startTime but before the query endTime
-                    boolean startTimeInTimeframe = startTimeDateFoundEvent.compareTo(startTimeDate) >= 0
-                            && startTimeDateFoundEvent.compareTo(endTimeDate) < 0;
+                    boolean startTimeInTimeframe = startTimeDateFoundEvent.compareTo(startTimeDate) >= 0 &&
+                            startTimeDateFoundEvent.compareTo(endTimeDate) <= 0;
 
                     // The endTime of event is on or before the query endTime but after the query startTime
-                    boolean endTimeInTimeFrame = endTimeDateFoundEvent.compareTo(endTimeDate) <= 0
-                            && endTimeDateFoundEvent.compareTo(startTimeDate) > 0;
+                    boolean endTimeInTimeFrame = endTimeDateFoundEvent.compareTo(endTimeDate) <= 0 &&
+                            endTimeDateFoundEvent.compareTo(startTimeDate) >= 0;
 
                     // If the startTime and endTime are both in query timeframe add the event to the list
-                    if (startTimeInTimeframe && endTimeInTimeFrame) {
+                    if (startTimeInTimeframe || endTimeInTimeFrame) {
                         allEventsWithRightTimes.add(event);
                     }
                 }
@@ -148,13 +148,13 @@ public class EventDAOImpl implements EventDAO {
 
     // READ
     @Override
-    public List<Event> getSameTimesWithSpecificCourse(String startTime, String endTime, String courseId, int offset,
+    public List<Event> getSameTimesWithSpecificCourse(String startTime, String endTime, String courseLink, int offset,
                                                       int size) {
         List<Event> allEvents = new ArrayList<>();
 
         for (Event event : collection.find(Filters.and(Filters.eq("startTime", startTime),
                 Filters.eq("endTime", endTime),
-                Filters.eq("courseId", courseId))).skip(offset).limit(size)) {
+                Filters.eq("courseId", courseLink))).skip(offset).limit(size)) {
             allEvents.add(event);
         }
 
@@ -171,6 +171,7 @@ public class EventDAOImpl implements EventDAO {
         }
         return allEventsWithSpecificCourse;
     }
+
 
     // READ
     @Override
@@ -190,10 +191,26 @@ public class EventDAOImpl implements EventDAO {
         collection.replaceOne(Filters.eq("_id", id), updatedEvent);
     }
 
+    // UPDATE
+    @Override
+    public void signUp(String cn, String id) {
+        Event event = getById(id);
+        event.joinEvent(cn);
+        update(event, event.getHashId());
+    }
+
     // DELETE
     @Override
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
+    }
+
+    // DELETE
+    @Override
+    public void leave(String cn, String id) {
+        Event event = getById(id);
+        event.leaveEvent(cn);
+        update(event, event.getHashId());
     }
 
 
@@ -206,6 +223,8 @@ public class EventDAOImpl implements EventDAO {
 
     @Override
     public boolean startIsAfterEndOrWrongFormat(String startTime, String endTime) {
+        if (startTime.equals("") && endTime.equals("")) return false;
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
         try {
             Date startTimeDate = sdf.parse(startTime);

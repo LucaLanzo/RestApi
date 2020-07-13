@@ -12,7 +12,9 @@ import javax.ws.rs.core.*;
 import java.io.IOException;
 import java.net.URI;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /***
@@ -44,21 +46,21 @@ public class EventService {
         }
 
         List<Event> allEvents;
-        if (startTime.equals("") && endTime.equals("")) {
+        if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
+            allEvents = new ArrayList<>();
+        } else if (startTime.equals("") && endTime.equals("")) {
             allEvents = eventDatabase.getAll(offset, size);
         } else if (startTime.equals("")) {
-            allEvents = eventDatabase.getByStartTime(startTime, offset, size);
-        } else if (endTime.equals("")) {
             allEvents = eventDatabase.getByEndTime(endTime, offset, size);
+        } else if (endTime.equals("")) {
+            allEvents = eventDatabase.getByStartTime(startTime, offset, size);
         } else {
             allEvents = eventDatabase.getByTimeframe(startTime, endTime, "", offset, size);
         }
 
-        // If no events have been found return 404 else display all events
-        if (allEvents.size() == 0) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .header("Authorization", "Bearer " + tokenAndRole[0])
-                    .build();
+        // If the offset is bigger than the amount of events, return an empty list
+        if (offset > allEvents.size()) {
+            allEvents = new ArrayList<>();
         }
 
         // Create POST and Pagination links
@@ -68,6 +70,7 @@ public class EventService {
 
         Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, allEvents.size(), "",
                 linkForPost);
+
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
                 .links(linksForPaginationAndPost)
@@ -94,7 +97,7 @@ public class EventService {
         Event event = eventDatabase.getById(eventId);
 
         // If no event has been found by that id return 404 else display event with header hyperlinks to next state
-        if (event == null) {
+        if (eventDatabase.isNotInDatabase(eventId)) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -128,7 +131,7 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
-        } else if (tokenAndRole[1].equals("True")) {
+        } else if (tokenAndRole[1].equals("student")) {
             return Authorization.getWrongRoleResponse();
         }
 
@@ -143,9 +146,10 @@ public class EventService {
         }
 
         // Set an absolute path on the course attribute of the new event
-        URI pathToEvent = uriInfo.getBaseUriBuilder().path("events/" + newEvent.getCourseId()).build();
+        URI pathToCourse = uriInfo.getBaseUriBuilder().path("course/" + newEvent.getCourseId()).build();
 
-        newEvent.setCourseId(pathToEvent.toString());
+        newEvent.setCourseId(pathToCourse.toString());
+        newEvent.setSignedUpStudents(new HashSet<>());
 
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
@@ -171,8 +175,6 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
-        } else if (tokenAndRole[1].equals("True")) {
-            return Authorization.getWrongRoleResponse();
         }
 
         // If the name is not set return 400. If the event to be updated can't be found return 404
@@ -187,11 +189,17 @@ public class EventService {
                     .build();
         }
 
-        // Give the new event the same hash as the old one
-        updatedEvent.setHashId(eventId);
+        // if client is a student, sign him up with his cn
+        if (tokenAndRole[1].equals("student")) {
+            eventDatabase.signUp(tokenAndRole[2], eventId);
+        } else {
+            // Give the new event the same hash as the old one
+            updatedEvent.setHashId(eventId);
 
-        // Update the event in the database
-        eventDatabase.update(updatedEvent, eventId);
+            // Update the event in the database
+            eventDatabase.update(updatedEvent, eventId);
+        }
+
 
         // Create the GET link
         Link link = Link.fromUri(uriInfo.getAbsolutePath())
@@ -215,8 +223,6 @@ public class EventService {
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
-        } else if (tokenAndRole[1].equals("True")) {
-            return Authorization.getWrongRoleResponse();
         }
 
         // If the event can't be found return 404
@@ -226,8 +232,13 @@ public class EventService {
                     .build();
         }
 
-        // Delete the event from the database
-        eventDatabase.delete(eventId);
+        // if client is a student, remove his cn from the event
+        if (tokenAndRole[1].equals("student")) {
+            eventDatabase.leave(tokenAndRole[2], eventId);
+        } else {
+            // Delete the event from the database
+            eventDatabase.delete(eventId);
+        }
 
         // Create the GET link
         Link link = Link.fromUri(uriInfo.getBaseUri() + "events")

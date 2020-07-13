@@ -9,6 +9,7 @@ import org.junit.jupiter.api.*;
 import resources.Event;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,13 +28,15 @@ public class EventServiceTest {
     private Event testEvent;
     private Genson builder;
     private OkHttpClient client;
-    private String authorizationCreds;
+    private String adminCreds;
+    private String studentCreds;
 
     @BeforeAll
     public void setUp() {
         builder = new Genson();
         client = new OkHttpClient();
-        authorizationCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        studentCreds = "Basic " + Base64.encodeBase64String("student:student".getBytes());
     }
 
 
@@ -43,12 +46,13 @@ public class EventServiceTest {
     public void createEventTest() {
         try {
             testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--20:00:00");
+            testEvent.setSignedUpStudents(new HashSet<>());
             RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
 
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -67,15 +71,15 @@ public class EventServiceTest {
     }
 
 
-    // GET all events
+    // GET all events as admin
     @Test
     @Order(2)
-    public void getAllEventsTest() {
+    public void getAllEventsTestAsAdmin() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -83,7 +87,33 @@ public class EventServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code.");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testEvent.getHashId()));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // GET all events as students
+    @Test
+    @Order(3)
+    public void getAllEventsTestAsStudent() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL)
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testEvent.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -95,13 +125,13 @@ public class EventServiceTest {
 
     // GET event by id
     @Test
-    @Order(3)
+    @Order(4)
     public void getEventByIdTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -109,7 +139,7 @@ public class EventServiceTest {
             if (response.code() != 200) {
                 fail("Wrong response code");
             } else {
-                assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
+                assertTrue(Objects.requireNonNull(response.body()).string().contains(testEvent.getHashId()));
             }
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
@@ -121,7 +151,7 @@ public class EventServiceTest {
 
     // PUT an event
     @Test
-    @Order(4)
+    @Order(5)
     public void updateEventTest() {
         try {
             testEvent.setStartTime("2020-07-18--19:00:00");
@@ -129,7 +159,7 @@ public class EventServiceTest {
 
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .put(requestBody)
                     .build();
 
@@ -142,12 +172,13 @@ public class EventServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
-            assertTrue(Objects.requireNonNull(response.body()).string().contains("2020-07-18--19:00:00"));
+            String body = Objects.requireNonNull(response.body()).string();
+            assertTrue(body.contains(testEvent.getHashId()) && body.contains("2020-07-18--19:00:00"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -156,15 +187,54 @@ public class EventServiceTest {
     }
 
 
-    // DELETE an event
+    // PUT as a student to sign up for event
     @Test
-    @Order(5)
-    public void deleteEventTest() {
+    @Order(6)
+    public void putAsStudentToSignUpTest() {
+        try {
+            testEvent.setStartTime("2020-07-18--19:00:00");
+            testEvent.setEndTime("2020-07-18--20:00:00");
+            RequestBody requestBody = RequestBody.create(builder.serialize(testEvent), JSON);
+
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testEvent.getHashId())
+                    .header("Authorization", studentCreds)
+                    .put(requestBody)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            System.out.println(response.code());
+            if (response.code() != 204) {
+                fail("Wrong response code");
+            }
+
+            request = new Request.Builder()
+                    .url(BASE_URL + "/" + testEvent.getHashId())
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            response = client.newCall(request).execute();
+
+            String body = Objects.requireNonNull(response.body()).string();
+            assertTrue(body.contains(testEvent.getHashId()) && body.contains("k11111"));
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // DELETE as student to leave an event
+    @Test
+    @Order(7)
+    public void deleteAsStudentToLeaveTest() {
         try {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
                     .delete()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", studentCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -176,13 +246,48 @@ public class EventServiceTest {
             request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", studentCreds)
                     .build();
 
             response = client.newCall(request).execute();
 
+            String body = Objects.requireNonNull(response.body()).string();
+            assertFalse(body.contains(testEvent.getHashId()) && body.contains("k11111"));
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
 
-            assertFalse(Objects.requireNonNull(response.body()).string().contains("2020-07-18--18:00:00"));
+
+    // DELETE an event
+    @Test
+    @Order(8)
+    public void deleteEventTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testEvent.getHashId())
+                    .delete()
+                    .header("Authorization", adminCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 204) {
+                fail("Wrong response code");
+            }
+
+            request = new Request.Builder()
+                    .url(BASE_URL + "/" + testEvent.getHashId())
+                    .get()
+                    .header("Authorization", adminCreds)
+                    .build();
+
+            response = client.newCall(request).execute();
+
+            String body = Objects.requireNonNull(response.body()).string();
+            assertFalse(body.contains(testEvent.getHashId()) && body.contains("2020-07-18--18:00:00"));
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {

@@ -83,6 +83,7 @@ public class Pagination {
         size = checkSize(size);
         offset = checkOffset(offset, amountOfResources);
 
+
         Link previousPage = createPreviousPage(uriInfo, "previousPage", name, offset, size);
         Link thisPage = createThisPage(uriInfo, "selfPage", name, offset, size);
         Link nextPage = createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
