@@ -75,8 +75,17 @@ public class CourseDAOImpl implements CourseDAO {
     // UPDATE
     @Override
     public void update(Course updatedCourse, String id) {
-
-        collection.replaceOne(Filters.eq("_id", id), updatedCourse);
+        Course oldCourse = getById(id);
+        if (!oldCourse.getCourseName().equals(updatedCourse.getCourseName())) {
+            oldCourse.setCourseName(updatedCourse.getCourseName());
+        }
+        if (!oldCourse.getCourseDescription().equals(updatedCourse.getCourseDescription())) {
+            oldCourse.setCourseDescription(updatedCourse.getCourseDescription());
+        }
+        if (oldCourse.getMaximumStudents() != updatedCourse.getMaximumStudents()) {
+            oldCourse.setMaximumStudents(updatedCourse.getMaximumStudents());
+        }
+        collection.replaceOne(Filters.eq("_id", id), oldCourse);
     }
 
     // DELETE

@@ -55,7 +55,7 @@ public class EventService {
         } else if (endTime.equals("")) {
             allEvents = eventDatabase.getByStartTime(startTime, offset, size);
         } else {
-            allEvents = eventDatabase.getByTimeframe(startTime, endTime, "", offset, size);
+            allEvents = eventDatabase.getByTimeframe(startTime, endTime, offset, size);
         }
 
         // If the offset is bigger than the amount of events, return an empty list
@@ -146,10 +146,12 @@ public class EventService {
         }
 
         // Set an absolute path on the course attribute of the new event
-        URI pathToCourse = uriInfo.getBaseUriBuilder().path("course/" + newEvent.getCourseId()).build();
+        URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourseId()).build();
 
         newEvent.setCourseId(pathToCourse.toString());
-        newEvent.setSignedUpStudents(new HashSet<>());
+        if (newEvent.getSignedUpStudents() == null) {
+            newEvent.setSignedUpStudents(new HashSet<>());
+        }
 
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
@@ -193,13 +195,9 @@ public class EventService {
         if (tokenAndRole[1].equals("student")) {
             eventDatabase.signUp(tokenAndRole[2], eventId);
         } else {
-            // Give the new event the same hash as the old one
-            updatedEvent.setHashId(eventId);
-
             // Update the event in the database
             eventDatabase.update(updatedEvent, eventId);
         }
-
 
         // Create the GET link
         Link link = Link.fromUri(uriInfo.getAbsolutePath())

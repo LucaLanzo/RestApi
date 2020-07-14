@@ -135,20 +135,22 @@ public class CourseService {
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
         // Get all courses in the timeFrame
-        List<Event> allEventsWithSpecificCourse;
+        List<Event> allEvents;
         if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
-            allEventsWithSpecificCourse = new ArrayList<>();
+            allEvents = new ArrayList<>();
         } else if (startTime.equals("") && endTime.equals("")) {
-            allEventsWithSpecificCourse = eventDatabase.getAll(offset, size);
+            allEvents = eventDatabase.getAll(offset, size);
         } else if (startTime.equals("")) {
-            allEventsWithSpecificCourse = eventDatabase.getByEndTime(endTime, offset, size);
+            allEvents = eventDatabase.getByEndTime(endTime, offset, size);
         } else if (endTime.equals("")) {
-            allEventsWithSpecificCourse = eventDatabase.getByStartTime(startTime, offset, size);
+            allEvents = eventDatabase.getByStartTime(startTime, offset, size);
         } else {
-            allEventsWithSpecificCourse = eventDatabase.getByTimeframe(startTime, endTime, uriToCourse.toString()
-                    , offset, size);
+            allEvents = eventDatabase.getByTimeframe(startTime, endTime, offset, size);
         }
 
+        // Only include events with the specific course
+        List<Event> allEventsWithSpecificCourse = eventDatabase.filterListForSpecificCourse(allEvents,
+                uriToCourse.toString());
 
         // If the offset is bigger than the amount of events, return an empty list
         if (offset > allEventsWithSpecificCourse.size()) {
@@ -175,6 +177,7 @@ public class CourseService {
     @Path("/{courseId}/events/{eventId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getSpecificEventFromSpecificCourse(@PathParam("eventId") String eventId,
+                                                       @PathParam("courseId") String courseId,
                                                        @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
@@ -184,10 +187,13 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // Get the event from the database
-        Event event = eventDatabase.getById(eventId);
+        // Build a uri for the course for searching
+        URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
-        // If no event has been found by that id return 404 else display event with header hyperlinks to next state
+        // Get the event from the database
+        Event event = eventDatabase.getByIdWithSpecificCourse(eventId, uriToCourse.toString());
+
+        // If no event has been found return 404 else display event with header hyperlinks to next state
         if (event == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
@@ -268,9 +274,10 @@ public class CourseService {
             return Authorization.getWrongRoleResponse();
         }
 
-        // If all attributes of the updated course are default (= no changes) or maximumStudents is wrong return 400
+        // If all attributes of the updated course are default or maximumStudents is wrong return 400
         // If the course to be updated can't be found return 404
-        if (updatedCourse.getCourseName().equals("") || updatedCourse.getMaximumStudents() <= 0) {
+        if (updatedCourse.getCourseName().equals("") || updatedCourse.getCourseDescription().equals("")
+                || updatedCourse.getMaximumStudents() <= 0) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -279,14 +286,6 @@ public class CourseService {
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
-
-        // Give the new course the same hash as the old one
-        updatedCourse.setHashId(courseId);
-
-        // Set the path to the course's events
-        URI pathToCourseEvents = uriInfo.getBaseUriBuilder().path("courses/" + updatedCourse.getHashId()
-                + "/events").build();
-        updatedCourse.setEvents(pathToCourseEvents.toString());
 
         // Update the course in the database
         courseDatabase.update(updatedCourse, courseId);

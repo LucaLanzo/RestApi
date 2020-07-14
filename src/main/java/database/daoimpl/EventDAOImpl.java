@@ -76,7 +76,7 @@ public class EventDAOImpl implements EventDAO {
 
     // READ
     @Override
-    public List<Event> getByTimeframe(String startTime, String endTime, String courseLink, int offset, int size) {
+    public List<Event> getByTimeframe(String startTime, String endTime, int offset, int size) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
 
         try {
@@ -88,20 +88,12 @@ public class EventDAOImpl implements EventDAO {
                 return new ArrayList<>();
             // if startTime is the same time as the endTime
             } else if (startTimeDate.compareTo(endTimeDate) == 0) {
-                if (!courseLink.equals("")) {
-                    return getSameTimesWithSpecificCourse(startTime, endTime, courseLink, offset, size);
-                } else {
-                    return getSameTimes(startTime, endTime, offset, size);
-                }
+                return getSameTimes(startTime, endTime, offset, size);
 
             // if startTime is sooner than endTime
             } else {
                 List<Event> allEvents;
-                if (!courseLink.equals("")) {
-                    allEvents = getByAssociatedCourse(courseLink, offset, size);
-                } else {
-                    allEvents = getAll(offset, size);
-                }
+                allEvents = getAll(offset, size);
 
                 List<Event> allEventsWithRightTimes = new ArrayList<>();
                 for (Event event : allEvents) {
@@ -148,26 +140,12 @@ public class EventDAOImpl implements EventDAO {
 
     // READ
     @Override
-    public List<Event> getSameTimesWithSpecificCourse(String startTime, String endTime, String courseLink, int offset,
-                                                      int size) {
-        List<Event> allEvents = new ArrayList<>();
-
-        for (Event event : collection.find(Filters.and(Filters.eq("startTime", startTime),
-                Filters.eq("endTime", endTime),
-                Filters.eq("courseId", courseLink))).skip(offset).limit(size)) {
-            allEvents.add(event);
-        }
-
-        return allEvents;
-    }
-
-
-    // READ
-    @Override
-    public List<Event> getByAssociatedCourse(String courseLink, int offset, int size) {
+    public List<Event> filterListForSpecificCourse(List<Event> allEvents, String courseLink) {
         List<Event> allEventsWithSpecificCourse = new ArrayList<>();
-        for (Event event : collection.find(Filters.eq("courseId", courseLink)).skip(offset).limit(size)) {
-            allEventsWithSpecificCourse.add(event);
+        for (Event event : allEvents) {
+            if (event.getCourseId().equals(courseLink)) {
+                allEventsWithSpecificCourse.add(event);
+            }
         }
         return allEventsWithSpecificCourse;
     }
@@ -179,6 +157,18 @@ public class EventDAOImpl implements EventDAO {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
+
+    // READ
+    @Override
+    public Event getByIdWithSpecificCourse(String id, String courseLink) {
+        Event event = collection.find(Filters.eq("_id", id)).first();
+        if (event != null && !event.getCourseId().equals(courseLink)) {
+            return null;
+        }
+        return event;
+    }
+
+
     // CREATE
     @Override
     public void insertInto(Event newEvent) {
@@ -188,7 +178,17 @@ public class EventDAOImpl implements EventDAO {
     // UPDATE
     @Override
     public void update(Event updatedEvent, String id) {
-        collection.replaceOne(Filters.eq("_id", id), updatedEvent);
+        Event oldEvent = getById(id);
+        if (!oldEvent.getStartTime().equals(updatedEvent.getStartTime())) {
+            oldEvent.setStartTime(updatedEvent.getStartTime());
+        }
+        if (!oldEvent.getEndTime().equals(updatedEvent.getEndTime())) {
+            oldEvent.setEndTime(updatedEvent.getEndTime());
+        }
+        if (!oldEvent.getSignedUpStudents().equals(updatedEvent.getSignedUpStudents())) {
+            oldEvent.setSignedUpStudents(updatedEvent.getSignedUpStudents());
+        }
+        collection.replaceOne(Filters.eq("_id", id), oldEvent);
     }
 
     // UPDATE
@@ -196,7 +196,7 @@ public class EventDAOImpl implements EventDAO {
     public void signUp(String cn, String id) {
         Event event = getById(id);
         event.joinEvent(cn);
-        update(event, event.getHashId());
+        collection.replaceOne(Filters.eq("_id", id), event);
     }
 
     // DELETE
@@ -210,7 +210,7 @@ public class EventDAOImpl implements EventDAO {
     public void leave(String cn, String id) {
         Event event = getById(id);
         event.leaveEvent(cn);
-        update(event, event.getHashId());
+        collection.replaceOne(Filters.eq("_id", id), event);
     }
 
 
