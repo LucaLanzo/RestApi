@@ -1,2 +1,6 @@
 target
 .idea
+tomcat.8080
+PVSExamSS2020RestAPI.iml
+src/main/java/de/fhws/fiw/pvs/exam/api/AuthTest.java
+src/main/java/de/fhws/fiw/pvs/exam/api/Test.java

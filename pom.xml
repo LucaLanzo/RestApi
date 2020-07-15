@@ -51,7 +51,7 @@
 
 
     <dependencies>
-        <!-- Using Junit Version 5 instead of 4 because I want my tests executed in a specific order -->
+        <!-- Using Junit Version 5 instead of 4 because I want my tests executed in a specific order with @Order -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -129,10 +129,10 @@
         </dependency>
 
 
-        <!-- The following three dependencies are needed to get the @XmlRootElement annotation on resources.
-             The pom.xml from the PVS repo didn't include a dependency for XML representation
-             (maybe because it was moved and the repo was from 2019?) so I had to manually add
-             all of those three to get it to work: -->
+        <!-- The following three dependencies are needed to get the @XmlRootElement annotation on
+             de.fhws.fiw.pvs.exam.resources.
+             I couldn't get it to work with the dependencies from the pvs20examtemplate.
+             I had to add all of those three to get it to work: -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
