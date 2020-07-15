@@ -1,8 +1,4 @@
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/StartServiceTest.java
-package de.fhws.fiw.pvs.exam.service;
-=======
 package de.fhws.fiw.pvs.exam;
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/StartServiceTest.java
 
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
@@ -36,12 +32,9 @@ public class StartServiceTest {
     }
 
 
-    // Test to do anything with no credentials. As every CRUD implements the same de.fhws.fiw.pvs.exam.authorization I only have to
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/StartServiceTest.java
-    // de.fhws.fiw.pvs.exam.test "wrong creds" and "no creds" once. RETURN CODE 401
-=======
+    // Test to do anything with no credentials. As every CRUD implements the same de.fhws.fiw.pvs.exam.authorization
+    // I only have to de.fhws.fiw.pvs.exam.test "wrong creds" and "no creds" once. RETURN CODE 401
     // test "wrong creds" and "no creds" once. RETURN CODE 401
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/StartServiceTest.java
     @Test
     public void accessServerWithNoCreds() {
         try {

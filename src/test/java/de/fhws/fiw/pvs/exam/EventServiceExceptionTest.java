@@ -1,8 +1,5 @@
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/EventServiceExceptionTest.java
-package de.fhws.fiw.pvs.exam.service;
-=======
 package de.fhws.fiw.pvs.exam;
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/EventServiceExceptionTest.java
+
 
 import com.owlike.genson.Genson;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
@@ -128,11 +125,8 @@ public class EventServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/EventServiceExceptionTest.java
     // GET an event that is not in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RETURN CODE 404
-=======
     // GET an event that is not in the de.fhws.fiw.pvs.exam.database. RETURN CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/EventServiceExceptionTest.java
     @Test
     @Order(4)
     public void getEventNotInDatabaseTest() {
@@ -187,11 +181,8 @@ public class EventServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/EventServiceExceptionTest.java
     // PUT with an event that is not in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
-=======
     // PUT with an event that is not in the de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/EventServiceExceptionTest.java
     @Test
     @Order(6)
     public void updateEventThatIsNotInDatabaseTest() {
@@ -220,11 +211,8 @@ public class EventServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/EventServiceExceptionTest.java
     // DELETE an event that is not in de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
-=======
     // DELETE an event that is not in de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/EventServiceExceptionTest.java
     @Test
     @Order(7)
     public void deleteEventTest() {

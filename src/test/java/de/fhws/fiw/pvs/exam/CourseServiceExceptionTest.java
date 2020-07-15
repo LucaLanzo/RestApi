@@ -1,8 +1,4 @@
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/CourseServiceExceptionTest.java
-package de.fhws.fiw.pvs.exam.service;
-=======
 package de.fhws.fiw.pvs.exam;
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/CourseServiceExceptionTest.java
 
 import com.owlike.genson.Genson;
 import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
@@ -134,11 +130,8 @@ public class CourseServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/CourseServiceExceptionTest.java
     // GET a course that is not in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RETURN CODE 404
-=======
     // GET a course that is not in the de.fhws.fiw.pvs.exam.database. RETURN CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/CourseServiceExceptionTest.java
     @Test
     @Order(4)
     public void getCourseNotInDatabaseTest() {
@@ -250,11 +243,8 @@ public class CourseServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/CourseServiceExceptionTest.java
     // PUT with a course that is not in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
-=======
     // PUT with a course that is not in the de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/CourseServiceExceptionTest.java
     @Test
     @Order(8)
     public void updateCourseThatIsNotInDatabaseTest() {
@@ -286,11 +276,8 @@ public class CourseServiceExceptionTest {
     }
 
 
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/CourseServiceExceptionTest.java
     // DELETE a course that is not in de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
-=======
     // DELETE a course that is not in de.fhws.fiw.pvs.exam.database. RESPONSE CODE 404
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/CourseServiceExceptionTest.java
     @Test
     @Order(9)
     public void deleteCourseTest() {

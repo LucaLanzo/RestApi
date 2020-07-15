@@ -1,8 +1,4 @@
-<<<<<<< HEAD:src/test/java/de/fhws/fiw/pvs/exam/service/EventServiceTest.java
-package de.fhws.fiw.pvs.exam.service;
-=======
 package de.fhws.fiw.pvs.exam;
->>>>>>> 413e86506a154840b823654d0d121b4e09ce0bb9:src/test/java/de/fhws/fiw/pvs/exam/EventServiceTest.java
 
 import com.owlike.genson.Genson;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
