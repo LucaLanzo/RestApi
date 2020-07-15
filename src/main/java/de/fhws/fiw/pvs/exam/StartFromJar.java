@@ -14,7 +14,7 @@ public class StartFromJar {
         final Tomcat tomcat = new Tomcat();
         tomcat.setPort(8080);
 
-        final Context context = tomcat.addWebapp("/api", "/");
+        final Context context = tomcat.addWebapp("/api", new File("src/main/webapp/").getAbsolutePath());
         final String pathToJar = getJarFileOfThisProject().getAbsolutePath();
         final WebResourceRoot resources = new StandardRoot(context);
 
