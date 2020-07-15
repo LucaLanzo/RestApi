@@ -1,29 +1,29 @@
 # Soft Skills REST API #
 
 
-__To run the MongoDB database:__\
+__To run the MongoDB de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database:__\
 Download Docker Desktop from the official site:
 
 https://www.docker.com/products/docker-desktop
 
-After installing go to the directory of this project and type (-d flag to run database in the background):
+After installing go to the directory of this project and type (-d flag to run de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database in the background):
 
 ```docker-compose up -d```
 
-Default database username: admin\
-Default database password: adminpassword\
-Docker will create volume to keep the database saved under the docker volume name:\
+Default de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database username: admin\
+Default de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database password: adminpassword\
+Docker will create volume to keep the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database saved under the docker volume name:\
 "pvsexamss2020restapi_mongoSoftSkillsDatabaseVolume"
 
 \
 \
 __To run the server:__
 
-```mvn -U clean package```
+```mvn -DskipTests=true package```
 
-This builds the jar to the directory 'target'. Change directory to 'target' and from there use command:
+This builds the jar to the directory 'target':
 
-```java -jar PVSExamSS2020RestAPI-1.0-SNAPSHOT.jar```
+```java -jar target/PVSExamSS2020RestAPI-0.0.1-jar-with-dependencies.jar```
 
 This will run the server.
 
