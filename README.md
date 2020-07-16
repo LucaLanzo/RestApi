@@ -1,18 +1,18 @@
 # Soft Skills REST API #
 
 
-__To run the MongoDB de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database:__\
+__To run the MongoDB database:__\
 Download Docker Desktop from the official site:
 
 https://www.docker.com/products/docker-desktop
 
-After installing go to the directory of this project and type (-d flag to run de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database in the background):
+After installing go to the directory of this project and type (-d flag to run database in the background):
 
 ```docker-compose up -d```
 
-Default de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database username: admin\
-Default de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database password: adminpassword\
-Docker will create volume to keep the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database saved under the docker volume name:\
+Default database username: admin\
+Default database password: adminpassword\
+Docker will create volume to keep the database saved under the docker volume name:\
 "pvsexamss2020restapi_mongoSoftSkillsDatabaseVolume"
 
 \
@@ -43,7 +43,8 @@ __To POST an event ressource:__
 {
     "startTime":"2020-07-18--18:00:00",
     "endTime":"2020-07-18--20:00:00",
-    "courseId":"5f0b776b1b0edf0238c0f502"
+    "courseId":"5f0b776b1b0edf0238c0f502",
+    "signedUpStudents":["k1111", "k22222"]
 }
 ```
 \
