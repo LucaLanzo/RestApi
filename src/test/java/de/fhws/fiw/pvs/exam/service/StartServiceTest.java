@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(Lifecycle.PER_CLASS)
 @TestMethodOrder(OrderAnnotation.class)
 public class StartServiceTest {
-    private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private final static String BASE_URL = "http://localhost:8080/api/softskills";
     private OkHttpClient client;
     private String adminCreds;

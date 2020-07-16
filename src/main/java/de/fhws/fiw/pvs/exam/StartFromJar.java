@@ -28,8 +28,7 @@ public class StartFromJar {
         tomcat.getServer().await();
     }
 
-    private static File getJarFileOfThisProject()
-    {
+    private static File getJarFileOfThisProject() {
         final String path = StartFromJar.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         final File fileOfClass = new File(path);
         if (fileOfClass.isFile()) {

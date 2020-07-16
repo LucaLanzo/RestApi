@@ -2,11 +2,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.fhws.applab.pvs</groupId>
-    <artifactId>examtemplate</artifactId>
+    <artifactId>PVSExamSS2020RestAPI</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
-    <name>PVS20ExamTemplate</name>
-    <description>Template for PVS20 Practical Examination</description>
+    <name>SoftSkillsRestAPI</name>
+    <description>A RESTful webAPI that manages the soft skills courses from the FIW faculty at FHWS.</description>
 
     <properties>
         <tomcat.version>8.5.13</tomcat.version>
@@ -132,7 +132,8 @@
             <artifactId>jersey-hk2</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-
+        <!-- This is a mongodb driver for java that's needed to create a mongodb database and interact with a
+             mongodb database -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>

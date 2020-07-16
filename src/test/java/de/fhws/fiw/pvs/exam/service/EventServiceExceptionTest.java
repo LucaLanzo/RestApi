@@ -1,8 +1,8 @@
 package de.fhws.fiw.pvs.exam.service;
 
 import com.owlike.genson.Genson;
+import de.fhws.fiw.pvs.exam.database.DAOFactory;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
-import de.fhws.fiw.pvs.exam.database.daoimpl.EventDAOImpl;
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
@@ -11,6 +11,8 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import de.fhws.fiw.pvs.exam.resources.Event;
 
 import java.io.IOException;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /***
@@ -22,18 +24,41 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(OrderAnnotation.class)
 public class EventServiceExceptionTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final static String BASE_URL = "http://localhost:8080/api/softskills/events";
-    private static final EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
+    private static final EventDAO eventDatabase = DAOFactory.createEventDAO();
+    private static String BASE_URL = "";
     private Event testEvent;
     private Genson builder;
     private OkHttpClient client;
-    private String authorizationCreds;
+    private String adminCreds;
 
     @BeforeAll
     public void setUp() {
         builder = new Genson();
         client = new OkHttpClient();
-        authorizationCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+
+        // Get the BASE_URL from the dispatcher
+        Response response = null;
+        try {
+            Request request = new Request.Builder()
+                    .url("http://localhost:8080/api/softskills")
+                    .get()
+                    .header("Authorization", adminCreds)
+                    .build();
+
+            response = client.newCall(request).execute();
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+
+        List<String> allLinkHeaders = response.headers("Link");
+        String eventLink = "";
+        for (String link : allLinkHeaders) {
+            if (link.contains("event")) eventLink = link;
+        }
+        BASE_URL = eventLink.substring(eventLink.indexOf("<") + 1, eventLink.indexOf(">"));
     }
 
 
@@ -48,7 +73,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -77,7 +102,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -106,7 +131,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -132,7 +157,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "EventThatIsNotInTheDatabase")
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -161,7 +186,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testEvent.getHashId())
                     .put(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -190,7 +215,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "EventThatIsNotInDatabase")
                     .put(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -216,7 +241,7 @@ public class EventServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "EventThatIsNotInDatabase")
                     .delete()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();

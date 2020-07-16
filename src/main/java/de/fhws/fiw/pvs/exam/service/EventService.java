@@ -1,9 +1,9 @@
 package de.fhws.fiw.pvs.exam.service;
 
 import de.fhws.fiw.pvs.exam.authorization.Authorization;
+import de.fhws.fiw.pvs.exam.database.DAOFactory;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
 import de.fhws.fiw.pvs.exam.paging.Pagination;
-import de.fhws.fiw.pvs.exam.database.daoimpl.EventDAOImpl;
 import org.bson.types.ObjectId;
 import de.fhws.fiw.pvs.exam.resources.Event;
 
@@ -26,10 +26,10 @@ import java.util.List;
 public class EventService {
     @Context
     protected UriInfo uriInfo;
-    protected EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
+    protected EventDAO eventDatabase = DAOFactory.createEventDAO();
 
 
-    // Get all events in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+    // Get all events in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllEvents(@QueryParam("from") @DefaultValue("") String startTime,
@@ -63,6 +63,10 @@ public class EventService {
             allEvents = new ArrayList<>();
         }
 
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(60);
+        cacheControl.setPrivate(true);
+
         // Create POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
                 .rel("createNewEvent").type("application/json")
@@ -75,6 +79,7 @@ public class EventService {
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
                 .links(linksForPaginationAndPost)
                 .header("X-totalAmountOfEvents", allEvents.size())
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -83,7 +88,8 @@ public class EventService {
     @GET
     @Path("{id}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getEventById(@PathParam("id") String eventId,
+    public Response getEventById(@Context Request request,
+                                 @PathParam("id") String eventId,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for de.fhws.fiw.pvs.exam.authorization
         String[] tokenAndRole = authorizeUser(authBody);
@@ -93,7 +99,7 @@ public class EventService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
         }
 
-        // Get the event from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Get the event from the database
         Event event = eventDatabase.getById(eventId);
 
         // If no event has been found by that id return 404 else display event with header hyperlinks to next state
@@ -102,6 +108,10 @@ public class EventService {
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(60);
+        cacheControl.setPrivate(true);
 
         // Create PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
@@ -116,6 +126,7 @@ public class EventService {
 
         return Response.ok(event).links(linkToPut, linkToDelete, linkToGetAll)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -153,7 +164,7 @@ public class EventService {
             newEvent.setSignedUpStudents(new HashSet<>());
         }
 
-        // Insert the event into the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Insert the event into the database
         eventDatabase.insertInto(newEvent);
 
         // Set the new location URI using the hash value as an index
@@ -169,8 +180,9 @@ public class EventService {
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateEvent(@PathParam("id") String eventId, Event updatedEvent,
-                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
+    public Response updateEvent(@Context Request request,
+                                @PathParam("id") String eventId, Event updatedEvent,
+                                @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for de.fhws.fiw.pvs.exam.authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
@@ -195,9 +207,12 @@ public class EventService {
         if (tokenAndRole[1].equals("student")) {
             eventDatabase.signUp(tokenAndRole[2], eventId);
         } else {
-            // Update the event in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+            // Update the event in the database
             eventDatabase.update(updatedEvent, eventId);
         }
+
+        // I would love to do a conditional PUT with eTags here, but as mongodb inserts and extracts the POJO's from
+        // the database the hashvalues change. I can't verify the eTags as they are not consistent.
 
         // Create the GET link
         Link link = Link.fromUri(uriInfo.getAbsolutePath())
@@ -234,7 +249,7 @@ public class EventService {
         if (tokenAndRole[1].equals("student")) {
             eventDatabase.leave(tokenAndRole[2], eventId);
         } else {
-            // Delete the event from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+            // Delete the event from the database
             eventDatabase.delete(eventId);
         }
 

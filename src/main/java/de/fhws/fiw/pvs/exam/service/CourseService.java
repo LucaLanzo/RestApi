@@ -1,11 +1,10 @@
 package de.fhws.fiw.pvs.exam.service;
 
 import de.fhws.fiw.pvs.exam.authorization.Authorization;
+import de.fhws.fiw.pvs.exam.database.DAOFactory;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
-import de.fhws.fiw.pvs.exam.database.daoimpl.CourseDAOImpl;
 import de.fhws.fiw.pvs.exam.paging.Pagination;
 import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
-import de.fhws.fiw.pvs.exam.database.daoimpl.EventDAOImpl;
 import org.bson.types.ObjectId;
 import de.fhws.fiw.pvs.exam.resources.Course;
 import de.fhws.fiw.pvs.exam.resources.Event;
@@ -28,11 +27,11 @@ import java.util.List;
 public class CourseService {
     @Context
     protected UriInfo uriInfo;
-    protected CourseDAO courseDatabase = new CourseDAOImpl("courses", Course.class);
-    protected EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
+    protected CourseDAO courseDatabase = DAOFactory.createCourseDAO();
+    protected EventDAO eventDatabase = DAOFactory.createEventDAO();
 
 
-    // Get all courses in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+    // Get all courses in the database
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAllCourses(@QueryParam("courseName") @DefaultValue("") String name,
@@ -47,7 +46,7 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // Get all courses or all courses by specific name from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Get all courses or all courses by specific name from the database
         List<Course> allCourses;
         if (name.equals("")) allCourses = courseDatabase.getAll(offset, size);
         else allCourses = courseDatabase.getByName(name, offset, size);
@@ -56,6 +55,11 @@ public class CourseService {
         if (offset > allCourses.size()) {
             allCourses = new ArrayList<>();
         }
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(86400);
+        cacheControl.setPrivate(true);
+        cacheControl.setNoStore(true);
 
         // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getAbsolutePath())
@@ -68,6 +72,7 @@ public class CourseService {
                 .links(linksForPaginationAndPost)
                 .header("X-totalAmountOfCourses", allCourses.size())
                 .header("Authorization", "Bearer " + tokenAndRole[0])
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -76,7 +81,8 @@ public class CourseService {
     @GET
     @Path("{courseId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getCourseById(@PathParam("courseId") String courseId,
+    public Response getCourseById(@Context Request request,
+                                  @PathParam("courseId") String courseId,
                                   @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for de.fhws.fiw.pvs.exam.authorization
         String[] tokenAndRole = authorizeUser(authBody);
@@ -93,8 +99,12 @@ public class CourseService {
                     .build();
         }
 
-        // Get the course from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Get the course from the database
         Course course = courseDatabase.getById(courseId);
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(86400);
+        cacheControl.setPrivate(true);
 
         // Create the PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getAbsolutePath())
@@ -109,6 +119,7 @@ public class CourseService {
 
         return Response.ok(course).links(linkToPut, linkToDelete, linkToGetAll)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -157,6 +168,10 @@ public class CourseService {
             allEventsWithSpecificCourse = new ArrayList<>();
         }
 
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(86400);
+        cacheControl.setPrivate(true);
+
         // Create the POST and Pagination links
         Link linkForPost = Link.fromUri(uriInfo.getBaseUri() + "events")
                 .rel("createNewEvent").type("application/json")
@@ -168,6 +183,7 @@ public class CourseService {
                 .links(linksForPaginationAndPost)
                 .header("X-totalAmountOfEvents", allEventsWithSpecificCourse.size())
                 .header("Authorization", "Bearer " + tokenAndRole[0])
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -176,7 +192,8 @@ public class CourseService {
     @GET
     @Path("/{courseId}/events/{eventId}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getSpecificEventFromSpecificCourse(@PathParam("eventId") String eventId,
+    public Response getSpecificEventFromSpecificCourse(@Context Request request,
+                                                       @PathParam("eventId") String eventId,
                                                        @PathParam("courseId") String courseId,
                                                        @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for de.fhws.fiw.pvs.exam.authorization
@@ -190,7 +207,7 @@ public class CourseService {
         // Build a uri for the course for searching
         URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
-        // Get the event from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Get the event from the database
         Event event = eventDatabase.getByIdWithSpecificCourse(eventId, uriToCourse.toString());
 
         // If no event has been found return 404 else display event with header hyperlinks to next state
@@ -199,6 +216,10 @@ public class CourseService {
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
+
+        CacheControl cacheControl = new CacheControl();
+        cacheControl.setMaxAge(86400);
+        cacheControl.setPrivate(true);
 
         // Create PUT, DELETE and GET links
         Link linkToPut = Link.fromUri(uriInfo.getBaseUri() + "events/" + event.getHashId())
@@ -213,6 +234,7 @@ public class CourseService {
 
         return Response.ok(event).links(linkToPut, linkToDelete, linkToGetAll)
                 .header("Authorization", "Bearer " + tokenAndRole[0])
+                .cacheControl(cacheControl)
                 .build();
     }
 
@@ -246,7 +268,7 @@ public class CourseService {
                 + "/events").build();
         newCourse.setEvents(pathToCourseEvents.toString());
 
-        // Insert the course into the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Insert the course into the database
         courseDatabase.insertInto(newCourse);
 
         // Set the new location URI using the hash value as an index
@@ -262,7 +284,8 @@ public class CourseService {
     @PUT
     @Path("{courseId}")
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response updateCourse(@PathParam ("courseId") String courseId, Course updatedCourse,
+    public Response updateCourse(@Context Request request,
+                                 @PathParam ("courseId") String courseId, Course updatedCourse,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
         // Check for de.fhws.fiw.pvs.exam.authorization
         String[] tokenAndRole = authorizeUser(authBody);
@@ -287,8 +310,11 @@ public class CourseService {
                     .build();
         }
 
-        // Update the course in the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Update the course in the database
         courseDatabase.update(updatedCourse, courseId);
+
+        // I would love to do a conditional PUT with eTags here, but as mongodb inserts and extracts the POJO's from
+        // the database the hashvalues change. I can't verify the eTags as they are not consistent.
 
         // Create the GET link
         Link linkToGet = Link.fromUri(uriInfo.getAbsolutePath())
@@ -323,7 +349,7 @@ public class CourseService {
                     .build();
         }
 
-        // Delete the course from the de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database
+        // Delete the course from the database
         courseDatabase.delete(courseId);
 
         // Create the GET link

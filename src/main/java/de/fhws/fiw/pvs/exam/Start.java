@@ -8,10 +8,6 @@ import org.apache.catalina.webresources.StandardRoot;
 
 import java.io.File;
 
-/***
- * By Luca Lanzo
- */
-
 
 public class Start {
     private static final String CONTEXT_PATH = "/api";

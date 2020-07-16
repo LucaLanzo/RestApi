@@ -1,8 +1,8 @@
 package de.fhws.fiw.pvs.exam.service;
 
 import com.owlike.genson.Genson;
+import de.fhws.fiw.pvs.exam.database.DAOFactory;
 import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
-import de.fhws.fiw.pvs.exam.database.daoimpl.CourseDAOImpl;
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
@@ -11,6 +11,8 @@ import org.junit.jupiter.api.TestInstance.Lifecycle;
 import de.fhws.fiw.pvs.exam.resources.Course;
 
 import java.io.IOException;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /***
@@ -22,18 +24,41 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(OrderAnnotation.class)
 public class CourseServiceExceptionTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static final CourseDAO courseDatabase = new CourseDAOImpl("courses", Course.class);
+    private static final CourseDAO courseDatabase = DAOFactory.createCourseDAO();
+    private static String BASE_URL = "";
     private Course testCourse;
     private Genson builder;
     private OkHttpClient client;
-    private String authorizationCreds;
+    private String adminCreds;
 
     @BeforeAll
     public void setUp() {
         builder = new Genson();
         client = new OkHttpClient();
-        authorizationCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+        adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+
+        // Get the BASE_URL from the dispatcher
+        Response response = null;
+        try {
+            Request request = new Request.Builder()
+                    .url("http://localhost:8080/api/softskills")
+                    .get()
+                    .header("Authorization", adminCreds)
+                    .build();
+
+            response = client.newCall(request).execute();
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+
+        List<String> allLinkHeaders = response.headers("Link");
+        String eventLink = "";
+        for (String link : allLinkHeaders) {
+            if (link.contains("course")) eventLink = link;
+        }
+        BASE_URL = eventLink.substring(eventLink.indexOf("<") + 1, eventLink.indexOf(">"));
     }
 
 
@@ -48,7 +73,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -79,7 +104,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -110,7 +135,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL)
                     .post(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -138,7 +163,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "CourseThatIsNotInTheDatabase")
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -164,7 +189,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId() + "/events/EventThatDoesntExist")
                     .get()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -195,7 +220,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .put(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -224,7 +249,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + testCourse.getHashId())
                     .put(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -254,7 +279,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "CourseThatIsNotInDatabase")
                     .put(requestBody)
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();
@@ -282,7 +307,7 @@ public class CourseServiceExceptionTest {
             Request request = new Request.Builder()
                     .url(BASE_URL + "/" + "CourseThatIsNotInDatabase")
                     .delete()
-                    .header("Authorization", authorizationCreds)
+                    .header("Authorization", adminCreds)
                     .build();
 
             Response response = client.newCall(request).execute();

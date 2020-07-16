@@ -10,10 +10,6 @@ import javax.ws.rs.ApplicationPath;
 import java.util.HashSet;
 import java.util.Set;
 
-/***
- * By Luca Lanzo
- */
-
 
 @ApplicationPath("softskills")
 public class Application extends ResourceConfig {

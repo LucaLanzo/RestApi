@@ -1,10 +1,9 @@
 package de.fhws.fiw.pvs.exam.service;
 
 import com.owlike.genson.Genson;
+import de.fhws.fiw.pvs.exam.database.DAOFactory;
 import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
-import de.fhws.fiw.pvs.exam.database.daoimpl.CourseDAOImpl;
-import de.fhws.fiw.pvs.exam.database.daoimpl.EventDAOImpl;
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
@@ -14,6 +13,7 @@ import de.fhws.fiw.pvs.exam.resources.Course;
 import de.fhws.fiw.pvs.exam.resources.Event;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,9 +27,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(OrderAnnotation.class)
 public class CourseServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private final static String BASE_URL = "http://localhost:8080/api/softskills/courses";
-    private static final CourseDAO courseDatabase = new CourseDAOImpl("courses", Course.class);
-    private static final EventDAO eventDatabase = new EventDAOImpl("events", Event.class);
+    private static final CourseDAO courseDatabase = DAOFactory.createCourseDAO();
+    private static final EventDAO eventDatabase = DAOFactory.createEventDAO();
+    private static String BASE_URL = "";
     private Course testCourse;
     private Event testEvent;
     private Genson builder;
@@ -44,6 +44,29 @@ public class CourseServiceTest {
         client = new OkHttpClient();
         adminCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
         studentCreds = "Basic " + Base64.encodeBase64String("admin:admin".getBytes());
+
+        // Get the BASE_URL from the dispatcher
+        Response response = null;
+        try {
+            Request request = new Request.Builder()
+                    .url("http://localhost:8080/api/softskills")
+                    .get()
+                    .header("Authorization", adminCreds)
+                    .build();
+
+            response = client.newCall(request).execute();
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+
+        List<String> allLinkHeaders = response.headers("Link");
+        String eventLink = "";
+        for (String link : allLinkHeaders) {
+            if (link.contains("course")) eventLink = link;
+        }
+        BASE_URL = eventLink.substring(eventLink.indexOf("<") + 1, eventLink.indexOf(">"));
     }
 
 
@@ -236,9 +259,113 @@ public class CourseServiceTest {
         }
     }
 
-    // PUT a course
+
+    // CourseService: GET all courses cacheControl check
     @Test
     @Order(8)
+    public void getAllCoursesCacheControlTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL)
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertNotNull(response.header("Cache-Control"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // CourseService: GET single cacheControl check
+    @Test
+    @Order(9)
+    public void getAllSingleCourseCacheControlTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId())
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertNotNull(response.header("Cache-Control"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // CourseService: GET all events cacheControl check
+    @Test
+    @Order(10)
+    public void getAllEventsCacheControlTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId() + "/events")
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertNotNull(response.header("Cache-Control"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+    // CourseService: GET specific event cacheControl check
+    @Test
+    @Order(11)
+    public void getSpecificEventCacheControlTest() {
+        try {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/" + testCourse.getHashId() + "/events/" + testEvent.getHashId())
+                    .get()
+                    .header("Authorization", studentCreds)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+
+            if (response.code() != 200) {
+                fail("Wrong response code.");
+            } else {
+                assertNotNull(response.header("Cache-Control"));
+            }
+        } catch (NullPointerException e) {
+            fail("No response body has been sent by the server");
+        } catch (IOException e) {
+            fail("Call to the Server couldn't be made. Is the server not running?");
+        }
+    }
+
+
+    // PUT a course
+    @Test
+    @Order(12)
     public void updateCourseTest() {
         try {
             testCourse.setCourseName("TestcoursePutTest");
@@ -276,7 +403,7 @@ public class CourseServiceTest {
 
     // DELETE a course
     @Test
-    @Order(9)
+    @Order(13)
     public void deleteCourseTest() {
         try {
             Request request = new Request.Builder()
