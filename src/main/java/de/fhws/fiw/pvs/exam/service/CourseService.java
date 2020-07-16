@@ -38,7 +38,7 @@ public class CourseService {
                                   @QueryParam("offset") @DefaultValue("0") int offset,
                                   @QueryParam("size") @DefaultValue("10") int size,
                                   @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -84,7 +84,7 @@ public class CourseService {
     public Response getCourseById(@Context Request request,
                                   @PathParam("courseId") String courseId,
                                   @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -92,7 +92,7 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // If no course has been found by that id return 404 else display course with header hyperlinks to next state
+        // If no course has been found by that id return 404
         if (courseDatabase.isNotInDatabase(courseId)) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
@@ -134,16 +134,13 @@ public class CourseService {
                                                  @QueryParam("offset") @DefaultValue("0") int offset,
                                                  @QueryParam("size") @DefaultValue("10") int size,
                                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
         if (tokenAndRole[0].equals("401")) {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
-
-        // Build a uri for the course for searching
-        URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
 
         // Get all courses in the timeFrame
         List<Event> allEvents;
@@ -161,7 +158,7 @@ public class CourseService {
 
         // Only include events with the specific course
         List<Event> allEventsWithSpecificCourse = eventDatabase.filterListForSpecificCourse(allEvents,
-                uriToCourse.toString());
+                courseId);
 
         // If the offset is bigger than the amount of events, return an empty list
         if (offset > allEventsWithSpecificCourse.size()) {
@@ -196,7 +193,7 @@ public class CourseService {
                                                        @PathParam("eventId") String eventId,
                                                        @PathParam("courseId") String courseId,
                                                        @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -204,13 +201,10 @@ public class CourseService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/courses");
         }
 
-        // Build a uri for the course for searching
-        URI uriToCourse = uriInfo.getBaseUriBuilder().path("courses/" + courseId).build();
-
         // Get the event from the database
-        Event event = eventDatabase.getByIdWithSpecificCourse(eventId, uriToCourse.toString());
+        Event event = eventDatabase.getByIdWithSpecificCourse(eventId, courseId);
 
-        // If no event has been found return 404 else display event with header hyperlinks to next state
+        // If no event has been found return 404
         if (event == null) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
@@ -244,7 +238,7 @@ public class CourseService {
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response createCourse(Course newCourse,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
@@ -263,15 +257,10 @@ public class CourseService {
                     .build();
         }
 
-        // Set the path to the course's events
-        URI pathToCourseEvents = uriInfo.getBaseUriBuilder().path("courses/" + newCourse.getHashId()
-                + "/events").build();
-        newCourse.setEvents(pathToCourseEvents.toString());
-
         // Insert the course into the database
         courseDatabase.insertInto(newCourse);
 
-        // Set the new location URI using the hash value as an index
+        // Create the header "Location" link
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newCourse.getHashId()).build();
 
         return Response.created(locationURI)
@@ -287,7 +276,7 @@ public class CourseService {
     public Response updateCourse(@Context Request request,
                                  @PathParam ("courseId") String courseId, Course updatedCourse,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent or exit with Forbidden if user is student
@@ -332,7 +321,7 @@ public class CourseService {
     @Path("{courseId}")
     public Response deleteCourse(@PathParam ("courseId") String courseId,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent

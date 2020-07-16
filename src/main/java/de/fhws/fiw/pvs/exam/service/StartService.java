@@ -19,6 +19,7 @@ public class StartService {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getDispatcher(@HeaderParam("Authorization") @DefaultValue("") String authBody) {
+        // Check for authorization
         String[] tokenAndRole = new String[3];
         try {
             tokenAndRole = Authorization.authorizeUser(authBody);
@@ -34,7 +35,7 @@ public class StartService {
                 .build();
 
         if (tokenAndRole[0].equals("401")) {
-            return Authorization.getWWWAuthenticateResponse("realm=api/softskills/");
+            return Authorization.getWWWAuthenticateResponse("api/softskills/");
         }
 
         return Response.noContent().links(linkToCourses, linkToEvents)

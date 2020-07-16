@@ -2,8 +2,10 @@ package de.fhws.fiw.pvs.exam.service;
 
 import de.fhws.fiw.pvs.exam.authorization.Authorization;
 import de.fhws.fiw.pvs.exam.database.DAOFactory;
+import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
 import de.fhws.fiw.pvs.exam.paging.Pagination;
+import de.fhws.fiw.pvs.exam.resources.Course;
 import org.bson.types.ObjectId;
 import de.fhws.fiw.pvs.exam.resources.Event;
 
@@ -27,6 +29,7 @@ public class EventService {
     @Context
     protected UriInfo uriInfo;
     protected EventDAO eventDatabase = DAOFactory.createEventDAO();
+    protected CourseDAO courseDatabase = DAOFactory.createCourseDAO();
 
 
     // Get all events in the database
@@ -37,7 +40,7 @@ public class EventService {
                                  @QueryParam("offset") @DefaultValue("0") int offset,
                                  @QueryParam("size") @DefaultValue("10") int size,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -72,8 +75,8 @@ public class EventService {
                 .rel("createNewEvent").type("application/json")
                 .build();
 
-        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, allEvents.size(), "",
-                linkForPost);
+        Link[] linksForPaginationAndPost = Pagination.createPagination(uriInfo, size, offset, allEvents.size(),
+                "", linkForPost);
 
 
         return Response.ok(new GenericEntity<Collection<Event>>(allEvents) {})
@@ -91,7 +94,7 @@ public class EventService {
     public Response getEventById(@Context Request request,
                                  @PathParam("id") String eventId,
                                  @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -102,7 +105,7 @@ public class EventService {
         // Get the event from the database
         Event event = eventDatabase.getById(eventId);
 
-        // If no event has been found by that id return 404 else display event with header hyperlinks to next state
+        // If no event has been found by that id return 404
         if (eventDatabase.isNotInDatabase(eventId)) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
@@ -136,7 +139,7 @@ public class EventService {
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response createEvent(Event newEvent,
                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -146,28 +149,30 @@ public class EventService {
             return Authorization.getWrongRoleResponse();
         }
 
+        // Load the specified course
+        Course course = courseDatabase.getById(newEvent.getCourseId());
+
+        // If the signedUpStudents list is not set, create an empty list
+        if (newEvent.getSignedUpStudents() == null) {
+            newEvent.setSignedUpStudents(new HashSet<>());
+        }
+
         // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times or date are
-        // wrong return 400. The resource will automatically create a hash if it hasn't been set by the client
+        // wrong or the specified course doesnt exist or the signedUpStudents list is bigger than the maxStudents
+        // return 400. The resource will automatically create a hash if it hasn't been set by the client
         if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() == null
-                || newEvent.getEndTime() == null ||
-                eventDatabase.startIsAfterEndOrWrongFormat(newEvent.getStartTime(), newEvent.getEndTime())) {
+                || newEvent.getEndTime() == null || course == null
+                || newEvent.getSignedUpStudents().size() > course.getMaximumStudents()
+                || eventDatabase.startIsAfterEndOrWrongFormat(newEvent.getStartTime(), newEvent.getEndTime())) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
 
-        // Set an absolute path on the course attribute of the new event
-        URI pathToCourse = uriInfo.getBaseUriBuilder().path("courses/" + newEvent.getCourseId()).build();
-
-        newEvent.setCourseId(pathToCourse.toString());
-        if (newEvent.getSignedUpStudents() == null) {
-            newEvent.setSignedUpStudents(new HashSet<>());
-        }
-
         // Insert the event into the database
         eventDatabase.insertInto(newEvent);
 
-        // Set the new location URI using the hash value as an index
+        // Create the header "Location" link
         URI locationURI = uriInfo.getAbsolutePathBuilder().path(newEvent.getHashId()).build();
 
         return Response.created(locationURI)
@@ -183,7 +188,7 @@ public class EventService {
     public Response updateEvent(@Context Request request,
                                 @PathParam("id") String eventId, Event updatedEvent,
                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent
@@ -191,22 +196,41 @@ public class EventService {
             return Authorization.getWWWAuthenticateResponse("api/softskills/events");
         }
 
-        // If the name is not set return 400. If the event to be updated can't be found return 404
-        if (updatedEvent.getStartTime() == null || updatedEvent.getEndTime() == null ||
-                eventDatabase.startIsAfterEndOrWrongFormat(updatedEvent.getStartTime(), updatedEvent.getEndTime())) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .header("Authorization", "Bearer " + tokenAndRole[0])
-                    .build();
-        } else if (eventDatabase.isNotInDatabase(eventId)) {
+        // If the event to be updated can't be found return 404
+        if (eventDatabase.isNotInDatabase(eventId)) {
             return Response.status(Response.Status.NOT_FOUND)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
         }
 
+        // Load the specified course and the old Event from database
+        Event oldEvent = eventDatabase.getById(eventId);
+        Course oldCourse = courseDatabase.getById(oldEvent.getCourseId());
+
         // if client is a student, sign him up with his cn
         if (tokenAndRole[1].equals("student")) {
-            eventDatabase.signUp(tokenAndRole[2], eventId);
+            // If the signed up would make the list bigger than maximum students return 400
+            if (!oldEvent.getSignedUpStudents().contains(tokenAndRole[2])
+                    && oldEvent.getSignedUpStudents().size() == oldCourse.getMaximumStudents()) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .header("Authorization", "Bearer " + tokenAndRole[0])
+                        .build();
+            } else {
+                eventDatabase.signUp(tokenAndRole[2], eventId);
+            }
+        // not student: Update the event
         } else {
+            // If start/endTimes are wrong or
+            // the signedUpStudents list is bigger than the maximumStudents return 400
+            if (courseDatabase.isNotInDatabase(updatedEvent.getCourseId()) ||
+                    eventDatabase.startIsAfterEndOrWrongFormat(updatedEvent.getStartTime(), updatedEvent.getEndTime())
+                    || ((updatedEvent.getSignedUpStudents() != null && updatedEvent.getSignedUpStudents().size() >
+                    oldCourse.getMaximumStudents()))) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .header("Authorization", "Bearer " + tokenAndRole[0])
+                        .build();
+            }
+
             // Update the event in the database
             eventDatabase.update(updatedEvent, eventId);
         }
@@ -230,7 +254,7 @@ public class EventService {
     @Path("{id}")
     public Response deleteEvent(@PathParam("id") String eventId,
                                 @HeaderParam("Authorization") @DefaultValue("") String authBody) {
-        // Check for de.fhws.fiw.pvs.exam.authorization
+        // Check for authorization
         String[] tokenAndRole = authorizeUser(authBody);
 
         // Exit with WWW-Authenticate if wrong creds have been sent

@@ -75,7 +75,7 @@ public class CourseServiceTest {
     @Order(1)
     public void createCourseTest() {
         try {
-            testCourse = new Course("Testcourse", "A de.fhws.fiw.pvs.exam.test course for JUnit", 50);
+            testCourse = new Course("Testcourse", "A test course for JUnit", 50);
             RequestBody requestBody = RequestBody.create(JSON, builder.serialize(testCourse));
 
             Request request = new Request.Builder()
@@ -210,7 +210,7 @@ public class CourseServiceTest {
     public void getAllEventsFromSpecificCourseTest() {
         try {
             testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--18:00:00");
-            testEvent.setCourseId(BASE_URL + "/" + testCourse.getHashId());
+            testEvent.setCourseId(testCourse.getHashId());
 
             eventDatabase.insertInto(testEvent);
 

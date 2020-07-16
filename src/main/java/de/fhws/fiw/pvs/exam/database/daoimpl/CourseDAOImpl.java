@@ -41,6 +41,7 @@ public class CourseDAOImpl implements CourseDAO {
 
 
     // READ
+    // Get every course
     @Override
     public List<Course> getAll(int offset, int size) {
         List<Course> allCourses = new ArrayList<>();
@@ -50,7 +51,9 @@ public class CourseDAOImpl implements CourseDAO {
         return allCourses;
     }
 
+
     // READ
+    // Get all courses/a course by names
     @Override
     public List<Course> getByName(String name, int offset, int size) {
         List<Course> allFoundCourses = new ArrayList<>();
@@ -60,41 +63,55 @@ public class CourseDAOImpl implements CourseDAO {
         return allFoundCourses;
     }
 
+
     // READ
+    // Get a course by its id
     @Override
     public Course getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
     }
 
+
     // CREATE
+    // Insert a new course
     @Override
     public void insertInto(Course newCourse) {
         collection.insertOne(newCourse);
     }
 
+
     // UPDATE
+    // Update a course
     @Override
     public void update(Course updatedCourse, String id) {
         Course oldCourse = getById(id);
-        if (!oldCourse.getCourseName().equals(updatedCourse.getCourseName())) {
+        if (updatedCourse.getCourseName() != null && !oldCourse.getCourseName().equals(updatedCourse.getCourseName())) {
             oldCourse.setCourseName(updatedCourse.getCourseName());
         }
-        if (!oldCourse.getCourseDescription().equals(updatedCourse.getCourseDescription())) {
+        if (updatedCourse.getCourseDescription() != null
+                && !oldCourse.getCourseDescription().equals(updatedCourse.getCourseDescription())) {
             oldCourse.setCourseDescription(updatedCourse.getCourseDescription());
         }
-        if (oldCourse.getMaximumStudents() != updatedCourse.getMaximumStudents()) {
+        if (updatedCourse.getMaximumStudents() > 0
+                && oldCourse.getMaximumStudents() != updatedCourse.getMaximumStudents()) {
             oldCourse.setMaximumStudents(updatedCourse.getMaximumStudents());
         }
         collection.replaceOne(Filters.eq("_id", id), oldCourse);
     }
 
+
     // DELETE
+    // Delete a course
     @Override
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
 
 
+
+    // Additional utility methods:
+
+    // Check if a course is not in the database
     @Override
     public boolean isNotInDatabase(String id) {
         Course course = getById(id);

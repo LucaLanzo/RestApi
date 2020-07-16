@@ -45,6 +45,7 @@ public class EventDAOImpl implements EventDAO {
 
 
     // READ
+    // Get every event
     @Override
     public List<Event> getAll(int offset, int size) {
         List<Event> allEvents = new ArrayList<>();
@@ -55,6 +56,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     // READ
+    // Get an event by searching for its exact startTime
     @Override
     public List<Event> getByStartTime(String startTime, int offset, int size) {
         List<Event> allEvents = new ArrayList<>();
@@ -65,6 +67,7 @@ public class EventDAOImpl implements EventDAO {
     }
 
     // READ
+    // Get an event by searching for its exact endTime
     @Override
     public List<Event> getByEndTime(String endTime, int offset, int size) {
         List<Event> allEvents = new ArrayList<>();
@@ -76,6 +79,7 @@ public class EventDAOImpl implements EventDAO {
 
     // READ
     @Override
+    // Get all events in between a start- and endTime
     public List<Event> getByTimeframe(String startTime, String endTime, int offset, int size) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
 
@@ -116,15 +120,16 @@ public class EventDAOImpl implements EventDAO {
                 return allEventsWithRightTimes;
             }
         } catch (ParseException e) {
-            // As the startTime/endTime come from user input all the way through to de.fhws.fiw.pvs.exam.de.fhws.fiw.pvs.exam.database level a wrong input could
+            // As the startTime/endTime come from user input all the way through to database level a wrong input could
             // invoke a ParseException. To not break the server with 500 just return an empty ArrayList back to the
-            // de.fhws.fiw.pvs.exam.service as the de.fhws.fiw.pvs.exam.service just handles it as "no Events found" and returns 404.
+            // service as the service just handles it as "no Events found" and returns 404.
             return new ArrayList<>();
         }
     }
 
 
     // READ
+    // A method for the getByTimeframe method to get all events that have the exact same start- and endTime
     @Override
     public List<Event> getSameTimes(String startTime, String endTime, int offset, int size) {
         List<Event> allEvents = new ArrayList<>();
@@ -139,11 +144,12 @@ public class EventDAOImpl implements EventDAO {
 
 
     // READ
+    // Filter a given list of events by a specific courseId
     @Override
-    public List<Event> filterListForSpecificCourse(List<Event> allEvents, String courseLink) {
+    public List<Event> filterListForSpecificCourse(List<Event> allEvents, String courseId) {
         List<Event> allEventsWithSpecificCourse = new ArrayList<>();
         for (Event event : allEvents) {
-            if (event.getCourseId().equals(courseLink)) {
+            if (event.getCourseId().equals(courseId)) {
                 allEventsWithSpecificCourse.add(event);
             }
         }
@@ -152,6 +158,7 @@ public class EventDAOImpl implements EventDAO {
 
 
     // READ
+    // Get an event by its id
     @Override
     public Event getById(String id) {
         return collection.find(Filters.eq("_id", id)).first();
@@ -159,39 +166,44 @@ public class EventDAOImpl implements EventDAO {
 
 
     // READ
+    // Get an event that has a specific courseId
     @Override
-    public Event getByIdWithSpecificCourse(String id, String courseLink) {
-        Event event = collection.find(Filters.eq("_id", id)).first();
-        if (event != null && !event.getCourseId().equals(courseLink)) {
-            return null;
-        }
-        return event;
+    public Event getByIdWithSpecificCourse(String id, String courseId) {
+        return collection.find(Filters.and(Filters.eq("_id", id), Filters.eq("courseId", courseId)))
+                .first();
     }
 
 
     // CREATE
+    // Insert a new event
     @Override
     public void insertInto(Event newEvent) {
         collection.insertOne(newEvent);
     }
 
     // UPDATE
+    // Update an event
     @Override
     public void update(Event updatedEvent, String id) {
         Event oldEvent = getById(id);
-        if (!oldEvent.getStartTime().equals(updatedEvent.getStartTime())) {
+        if (updatedEvent.getStartTime() != null && !oldEvent.getStartTime().equals(updatedEvent.getStartTime())) {
             oldEvent.setStartTime(updatedEvent.getStartTime());
         }
-        if (!oldEvent.getEndTime().equals(updatedEvent.getEndTime())) {
+        if (updatedEvent.getEndTime() != null && !oldEvent.getEndTime().equals(updatedEvent.getEndTime())) {
             oldEvent.setEndTime(updatedEvent.getEndTime());
         }
-        if (!oldEvent.getSignedUpStudents().equals(updatedEvent.getSignedUpStudents())) {
+        if (updatedEvent.getSignedUpStudents() != null
+                && !oldEvent.getSignedUpStudents().equals(updatedEvent.getSignedUpStudents())) {
             oldEvent.setSignedUpStudents(updatedEvent.getSignedUpStudents());
+        }
+        if (updatedEvent.getCourseId() != null && !oldEvent.getCourseId().equals(updatedEvent.getCourseId())) {
+            oldEvent.setCourseId(updatedEvent.getCourseId());
         }
         collection.replaceOne(Filters.eq("_id", id), oldEvent);
     }
 
     // UPDATE
+    // Sign a student up to an event by adding his cn
     @Override
     public void signUp(String cn, String id) {
         Event event = getById(id);
@@ -200,12 +212,14 @@ public class EventDAOImpl implements EventDAO {
     }
 
     // DELETE
+    // Delete an event
     @Override
     public void delete(String id) {
         collection.deleteOne(Filters.eq("_id", id));
     }
 
     // DELETE
+    // Release a student from an event by delete his cn
     @Override
     public void leave(String cn, String id) {
         Event event = getById(id);
@@ -214,6 +228,10 @@ public class EventDAOImpl implements EventDAO {
     }
 
 
+
+    // Additional utility methods:
+
+    // Check if an event is not in the database
     @Override
     public boolean isNotInDatabase(String id) {
         Event document = getById(id);
@@ -221,8 +239,10 @@ public class EventDAOImpl implements EventDAO {
     }
 
 
+    // Check the start- and endTime if they are not in the proper format.
     @Override
     public boolean startIsAfterEndOrWrongFormat(String startTime, String endTime) {
+        if (startTime == null || endTime == null) return false;
         if (startTime.equals("") && endTime.equals("")) return false;
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");

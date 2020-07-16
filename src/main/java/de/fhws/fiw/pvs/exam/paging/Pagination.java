@@ -9,34 +9,66 @@ import javax.ws.rs.core.UriInfo;
 
 
 public class Pagination {
-    private static Link createPreviousPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
+    // Create the pagination which creates all links and returns an array of all the links
+    public static Link[] createPagination(UriInfo uriInfo, int size, int offset, int amountOfResources, String name,
+                                          Link linkForPost) {
+        size = checkSize(size);
+        offset = checkOffset(offset, amountOfResources);
+
+
+        Link previousPage = createPreviousPage(uriInfo, name, offset, size);
+        Link thisPage = createThisPage(uriInfo, name, offset, size);
+        Link nextPage = createNextPage(uriInfo, name, offset, size, amountOfResources);
+
+        return getLinkArray(linkForPost, previousPage, thisPage, nextPage);
+    }
+
+    // This structures the linkArray and looks for missing links
+    private static Link[] getLinkArray(Link linkForPost, Link previousPage, Link thisPage, Link nextPage) {
+        if (previousPage == null && nextPage == null) {
+            return new Link[] {linkForPost, thisPage};
+        } else if (previousPage == null) {
+            return new Link[] {linkForPost, thisPage, nextPage};
+        } else if (nextPage == null) {
+            return new Link[] {linkForPost, previousPage, thisPage};
+        } else {
+            return new Link[] {linkForPost, previousPage, thisPage, nextPage};
+        }
+    }
+
+
+    // Create the header link for the previous page
+    private static Link createPreviousPage(UriInfo uriInfo, String name, int offset, int size) {
         if (offset == 0 || size == 0) {
             return null;
         } else if ((offset - size) <= 0){
-            return createLink(uriInfo, rel, name, 0, offset);
+            return createLink(uriInfo, "previousPage", name, 0, offset);
         } else {
-            return createLink(uriInfo, rel, name, (offset - size), size);
+            return createLink(uriInfo, "previousPage", name, (offset - size), size);
         }
     }
 
 
-    private static Link createThisPage(UriInfo uriInfo, String rel, String name, int offset, int size) {
-        return createLink(uriInfo, rel, name, offset, size);
+    // Create the header link for the self page
+    private static Link createThisPage(UriInfo uriInfo, String name, int offset, int size) {
+        return createLink(uriInfo, "selfPage", name, offset, size);
     }
 
 
-    private static Link createNextPage(UriInfo uriInfo, String rel, String name, int offset, int size,
-                                      int amountOfResources) {
+    // Create the header link for the next page
+    private static Link createNextPage(UriInfo uriInfo, String name, int offset, int size,
+                                       int amountOfResources) {
         if ((offset + size) >= amountOfResources) {
             return null;
         } else if ((offset + size * 2) > amountOfResources) {
-            return createLink(uriInfo, rel, name, (offset + size), (amountOfResources - (offset + size)));
+            return createLink(uriInfo, "nextPage", name, (offset + size), (amountOfResources - (offset + size)));
         } else {
-            return createLink(uriInfo, rel, name, (offset + size), size);
+            return createLink(uriInfo, "nextPage", name, (offset + size), size);
         }
     }
 
 
+    // Template to create a link
     private static Link createLink(UriInfo uriInfo, String rel, String name, int offset, int size) {
         if (name.equals("")) {
             return Link.fromUri(uriInfo.getAbsolutePath() + "?offset=" + offset + "&size=" + size)
@@ -52,18 +84,10 @@ public class Pagination {
     }
 
 
-    private static Link[] getLinkArray(Link linkForPost, Link previousPage, Link thisPage, Link nextPage) {
-        if (previousPage == null && nextPage == null) {
-            return new Link[] {linkForPost, thisPage};
-        } else if (previousPage == null) {
-            return new Link[] {linkForPost, thisPage, nextPage};
-        } else if (nextPage == null) {
-            return new Link[] {linkForPost, previousPage, thisPage};
-        } else {
-            return new Link[] {linkForPost, previousPage, thisPage, nextPage};
-        }
-    }
 
+    // Additional methods:
+
+    // Check the offset
 
     private static int checkOffset(int offset, int amountOfResources) {
         if (offset > amountOfResources) offset = amountOfResources;
@@ -71,6 +95,7 @@ public class Pagination {
         return offset;
     }
 
+    // Check the size
 
     private static int checkSize(int size) {
         if (size <= 0) return 1;
@@ -78,16 +103,5 @@ public class Pagination {
     }
 
 
-    public static Link[] createPagination(UriInfo uriInfo, int size, int offset, int amountOfResources, String name,
-                                          Link linkForPost) {
-        size = checkSize(size);
-        offset = checkOffset(offset, amountOfResources);
 
-
-        Link previousPage = createPreviousPage(uriInfo, "previousPage", name, offset, size);
-        Link thisPage = createThisPage(uriInfo, "selfPage", name, offset, size);
-        Link nextPage = createNextPage(uriInfo, "nextPage", name, offset, size, amountOfResources);
-
-        return getLinkArray(linkForPost, previousPage, thisPage, nextPage);
-    }
 }

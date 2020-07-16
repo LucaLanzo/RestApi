@@ -2,16 +2,15 @@ package de.fhws.fiw.pvs.exam.service;
 
 import com.owlike.genson.Genson;
 import de.fhws.fiw.pvs.exam.database.DAOFactory;
+import de.fhws.fiw.pvs.exam.database.dao.CourseDAO;
 import de.fhws.fiw.pvs.exam.database.dao.EventDAO;
-import javassist.bytecode.ByteArray;
+import de.fhws.fiw.pvs.exam.resources.Course;
 import okhttp3.*;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.*;
 import de.fhws.fiw.pvs.exam.resources.Event;
 
-import javax.print.DocFlavor;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,8 +26,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class EventServiceTest {
     private final static MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final EventDAO eventDatabase = DAOFactory.createEventDAO();
+    private static final CourseDAO courseDatabase = DAOFactory.createCourseDAO();
     private static String BASE_URL = "";
     private Event testEvent;
+    private Course testCourse;
     private Genson builder;
     private OkHttpClient client;
     private String adminCreds;
@@ -70,8 +71,12 @@ public class EventServiceTest {
     @Order(1)
     public void createEventTest() {
         try {
+            testCourse = new Course("testCourse", "testDescription", 50);
+            courseDatabase.insertInto(testCourse);
+
             testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--20:00:00");
-            testEvent.setSignedUpStudents(new HashSet<>());
+            testEvent.setCourseId(testCourse.getHashId());
+
             RequestBody requestBody = RequestBody.create(JSON, builder.serialize(testEvent));
 
             Request request = new Request.Builder()
@@ -174,7 +179,7 @@ public class EventServiceTest {
     }
 
 
-    // CourseService: GET all events cacheControl check
+    // GET all events cacheControl check
     @Test
     @Order(5)
     public void getAllEventsCacheControlTest() {
@@ -200,7 +205,7 @@ public class EventServiceTest {
     }
 
 
-    // CourseService: GET single cacheControl check
+    // GET single cacheControl check
     @Test
     @Order(6)
     public void getAllSingleEventCacheControlTest() {
@@ -269,8 +274,6 @@ public class EventServiceTest {
     @Order(8)
     public void putAsStudentToSignUpTest() {
         try {
-            testEvent.setStartTime("2020-07-18--19:00:00");
-            testEvent.setEndTime("2020-07-18--20:00:00");
             RequestBody requestBody = RequestBody.create(JSON, builder.serialize(testEvent));
 
             Request request = new Request.Builder()
@@ -374,6 +377,10 @@ public class EventServiceTest {
 
     @AfterAll
     public void tearDown() {
+        Course course = courseDatabase.getById(testCourse.getHashId());
+        if (course != null) {
+            courseDatabase.delete(testCourse.getHashId());
+        }
         Event event = eventDatabase.getById(testEvent.getHashId());
         if (event != null) {
             eventDatabase.delete(testEvent.getHashId());

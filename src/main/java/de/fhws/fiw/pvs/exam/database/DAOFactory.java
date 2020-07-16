@@ -13,10 +13,12 @@ import de.fhws.fiw.pvs.exam.resources.Event;
 
 
 public class DAOFactory {
+    // Return a course database interface to hide implementation
     public static CourseDAO createCourseDAO() {
         return new CourseDAOImpl("courses", Course.class);
     }
 
+    // Return an event database interface to hide implementation
     public static EventDAO createEventDAO() {
         return new EventDAOImpl("events", Event.class);
     }

@@ -13,7 +13,6 @@ import javax.xml.bind.annotation.XmlRootElement;
  * By Luca Lanzo
  */
 
-
 @XmlRootElement
 public class Course {
     @BsonId
@@ -21,7 +20,9 @@ public class Course {
     private String courseName;
     private String courseDescription;
     private int maximumStudents;
-    private String events;
+    @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/courses/${instance.hashId}/events", rel = "allEvents",
+            type = "application/json")
+    private Link allEvents;
     @InjectLink(style = InjectLink.Style.ABSOLUTE, value = "/courses/${instance.hashId}", rel = "self",
             type = "application/json")
     private Link self;
@@ -36,55 +37,53 @@ public class Course {
         this.maximumStudents = maximumStudents;
     }
 
-
+    // Getter: HashId
     public String getHashId() {
         if (hashId == null) {
             setHashId(ObjectId.get().toString());
         }
         return hashId;
     }
-
+    // Setter: HashId
     public void setHashId(String hashId) {
         this.hashId = hashId;
     }
 
-
+    // Getter: CourseName
     public String getCourseName() {
         return courseName;
     }
-
+    // Setter: CourseName
     public void setCourseName(String courseName) {
         this.courseName = courseName;
     }
 
-
+    // Getter: CourseDescription
     public String getCourseDescription() {
         return courseDescription;
     }
-
+    // Setter: CourseDescription
     public void setCourseDescription(String courseDescription) {
         this.courseDescription = courseDescription;
     }
 
-
+    // Getter: MaximumStudents
     public int getMaximumStudents() {
         return maximumStudents;
     }
-
+    // Setter: MaximumStudents
     public void setMaximumStudents(int maximumStudents) {
         this.maximumStudents = maximumStudents;
     }
 
-
-    public String getEvents() {
-        return events;
-    }
-
-    public void setEvents(String events) {
-        this.events = events;
+    // Getter: Link to events
+    @JsonConverter(ServerLinkConverter.class)
+    public Link getEvents() {
+        return allEvents;
     }
 
 
+    // Get the resource itself
     @JsonConverter(ServerLinkConverter.class)
     public Link getSelf() {
         return self;
