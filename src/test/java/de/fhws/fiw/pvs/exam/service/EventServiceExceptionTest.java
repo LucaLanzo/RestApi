@@ -87,11 +87,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -116,11 +112,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -145,11 +137,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -182,11 +170,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -208,11 +192,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -237,11 +217,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -260,6 +236,7 @@ public class EventServiceExceptionTest {
             eventDatabase.insertInto(testEvent);
 
             testEvent.setStartTime("2020-07-18--19:00:00");
+            testEvent.setEndTime("2020-07-18--20:00:00");
             testEvent.setCourseId("DefinitelyNotInTheDatabase");
 
             RequestBody requestBody = RequestBody.create(JSON, builder.serialize(testEvent));
@@ -274,11 +251,7 @@ public class EventServiceExceptionTest {
 
             eventDatabase.delete(testEvent.getHashId());
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -294,6 +267,7 @@ public class EventServiceExceptionTest {
         try {
             testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--20:00:00");
             testEvent.setCourseId(testCourse.getHashId());
+            testEvent.setSignedUpStudents(new HashSet<>());
             eventDatabase.insertInto(testEvent);
 
             HashSet<String> hs = new HashSet<>();
@@ -312,11 +286,7 @@ public class EventServiceExceptionTest {
 
             eventDatabase.delete(testEvent.getHashId());
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -353,11 +323,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -379,11 +345,7 @@ public class EventServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }

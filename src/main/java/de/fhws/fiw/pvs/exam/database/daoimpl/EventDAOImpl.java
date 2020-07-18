@@ -243,7 +243,6 @@ public class EventDAOImpl implements EventDAO {
     @Override
     public boolean startIsAfterEndOrWrongFormat(String startTime, String endTime) {
         if (startTime == null || endTime == null) return false;
-        if (startTime.equals("") && endTime.equals("")) return false;
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
         try {
@@ -254,6 +253,30 @@ public class EventDAOImpl implements EventDAO {
             return startTimeDate.compareTo(endTimeDate) > 0;
         } catch (ParseException e) {
             return true;
+        }
+    }
+
+    // Check if start- or endTime is wrong
+    @Override
+    public boolean timeInWrongFormat(String startTime, String endTime) {
+        if (startTime == null && endTime == null) {
+            return false;
+        } else if (startTime != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
+            try {
+                Date startTimeDate = sdf.parse(startTime);
+                return false;
+            } catch (ParseException e) {
+                return true;
+            }
+        } else {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd--HH:mm:ss");
+            try {
+                Date endTimeDate = sdf.parse(endTime);
+                return false;
+            } catch (ParseException e) {
+                return true;
+            }
         }
     }
 }

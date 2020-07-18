@@ -236,6 +236,9 @@ public class EventServiceTest {
     @Order(7)
     public void updateEventTest() {
         try {
+            testEvent.setCourseId(testCourse.getHashId());
+            testEvent.setEndTime(null);
+            testEvent.setSignedUpStudents(null);
             testEvent.setStartTime("2020-07-18--19:00:00");
             RequestBody requestBody = RequestBody.create(JSON, builder.serialize(testEvent));
 
@@ -246,7 +249,7 @@ public class EventServiceTest {
                     .build();
 
             Response response = client.newCall(request).execute();
-
+            System.out.println(response.code());
             if (response.code() != 204) {
                 fail("Wrong response code");
             }

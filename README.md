@@ -33,8 +33,8 @@ __To POST a course ressource:__
 ```
 {
     "courseName":"Teammanagement",
-    "courseDescription":"Learn how to manage courses",
-    "maximumStudents":"50"
+    "courseDescription":"Learn how to manage teams.",
+    "maximumStudents":50
 }
 ```
 

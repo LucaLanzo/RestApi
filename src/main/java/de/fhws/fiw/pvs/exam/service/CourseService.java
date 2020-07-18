@@ -144,10 +144,10 @@ public class CourseService {
 
         // Get all courses in the timeFrame
         List<Event> allEvents;
-        if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
-            allEvents = new ArrayList<>();
-        } else if (startTime.equals("") && endTime.equals("")) {
+        if (startTime.equals("") && endTime.equals("")) {
             allEvents = eventDatabase.getAll(offset, size);
+        } else if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
+            allEvents = new ArrayList<>();
         } else if (startTime.equals("")) {
             allEvents = eventDatabase.getByEndTime(endTime, offset, size);
         } else if (endTime.equals("")) {
@@ -248,10 +248,18 @@ public class CourseService {
             return Authorization.getWrongRoleResponse();
         }
 
-        // If the hash value of the course object isn't a valid ObjectId-Hash-Value or the name is null return 400
-        // The resource will automatically create a hash if it hasn't been set by the client
-        if (!ObjectId.isValid(newCourse.getHashId()) || newCourse.getCourseName().equals("")
-                || newCourse.getCourseDescription().equals("") || newCourse.getMaximumStudents() <= 0) {
+        // Check for wrong input
+        boolean wrongHashIdSet = !ObjectId.isValid(newCourse.getHashId());
+        boolean noInputGiven = newCourse.getCourseName() == null || newCourse.getCourseDescription() == null
+                || newCourse.getMaximumStudents() == 0;
+        boolean deliberateEmptyCourseNameGiven = newCourse.getCourseName() != null
+                && newCourse.getCourseName().equals("");
+        boolean deliberateEmptyCourseDescrGiven = newCourse.getCourseDescription() != null
+                && newCourse.getCourseDescription().equals("");
+        boolean deliberateWrongMaximumStudents = newCourse.getMaximumStudents() < 0;
+
+        if (wrongHashIdSet || noInputGiven || deliberateEmptyCourseNameGiven || deliberateEmptyCourseDescrGiven
+                || deliberateWrongMaximumStudents) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -286,10 +294,17 @@ public class CourseService {
             return Authorization.getWrongRoleResponse();
         }
 
-        // If all attributes of the updated course are default or maximumStudents is wrong return 400
-        // If the course to be updated can't be found return 404
-        if (updatedCourse.getCourseName().equals("") || updatedCourse.getCourseDescription().equals("")
-                || updatedCourse.getMaximumStudents() <= 0) {
+        // Check for wrong input
+        boolean noInputGiven = updatedCourse.getCourseName() == null
+                && updatedCourse.getCourseDescription() == null && updatedCourse.getMaximumStudents() == 0;
+        boolean deliberateEmptyCourseNameGiven = updatedCourse.getCourseName() != null
+                && updatedCourse.getCourseName().equals("");
+        boolean deliberateEmptyCourseDescrGiven = updatedCourse.getCourseDescription() != null
+                && updatedCourse.getCourseDescription().equals("");
+        boolean deliberateWrongMaximumStudents = updatedCourse.getMaximumStudents() < 0;
+
+        if (noInputGiven || deliberateEmptyCourseNameGiven || deliberateEmptyCourseDescrGiven
+                || deliberateWrongMaximumStudents) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();

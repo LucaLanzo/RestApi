@@ -49,10 +49,10 @@ public class EventService {
         }
 
         List<Event> allEvents;
-        if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
-            allEvents = new ArrayList<>();
-        } else if (startTime.equals("") && endTime.equals("")) {
+        if (startTime.equals("") && endTime.equals("")) {
             allEvents = eventDatabase.getAll(offset, size);
+        } else if (eventDatabase.startIsAfterEndOrWrongFormat(startTime, endTime)) {
+            allEvents = new ArrayList<>();
         } else if (startTime.equals("")) {
             allEvents = eventDatabase.getByEndTime(endTime, offset, size);
         } else if (endTime.equals("")) {
@@ -157,13 +157,17 @@ public class EventService {
             newEvent.setSignedUpStudents(new HashSet<>());
         }
 
-        // If the hash value of the event object isn't a valid ObjectId-Hash-Value or the start/end times or date are
-        // wrong or the specified course doesnt exist or the signedUpStudents list is bigger than the maxStudents
-        // return 400. The resource will automatically create a hash if it hasn't been set by the client
-        if (!ObjectId.isValid(newEvent.getHashId()) || newEvent.getStartTime() == null
-                || newEvent.getEndTime() == null || course == null
-                || newEvent.getSignedUpStudents().size() > course.getMaximumStudents()
-                || eventDatabase.startIsAfterEndOrWrongFormat(newEvent.getStartTime(), newEvent.getEndTime())) {
+        // Check for wrong input
+        boolean wrongHashIdSet = !ObjectId.isValid(newEvent.getHashId());
+        boolean courseDoesNotExistOrNoCourseIdGiven = course == null;
+        boolean noInputGiven = newEvent.getStartTime() == null || newEvent.getEndTime() == null;
+        boolean deliberateWrongTimesGiven = eventDatabase.startIsAfterEndOrWrongFormat(newEvent.getStartTime(),
+                newEvent.getEndTime());
+        boolean signedUpStudentsTooBig = course != null &&
+                newEvent.getSignedUpStudents().size() > course.getMaximumStudents();
+
+        if (wrongHashIdSet || courseDoesNotExistOrNoCourseIdGiven || noInputGiven || deliberateWrongTimesGiven
+                || signedUpStudentsTooBig) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .header("Authorization", "Bearer " + tokenAndRole[0])
                     .build();
@@ -205,13 +209,23 @@ public class EventService {
 
         // Load the specified course and the old Event from database
         Event oldEvent = eventDatabase.getById(eventId);
-        Course oldCourse = courseDatabase.getById(oldEvent.getCourseId());
+        Course course = courseDatabase.getById(updatedEvent.getCourseId());
+
+        // Check for wrong input
+        boolean courseDoesNotExistOrNoCourseIsGiven = course == null;
+        boolean noInputGiven = updatedEvent.getStartTime() == null && updatedEvent.getEndTime() == null
+                && updatedEvent.getSignedUpStudents() == null;
+        boolean deliberateWrongTimesGiven = eventDatabase.timeInWrongFormat(updatedEvent.getStartTime(),
+                updatedEvent.getEndTime());
+        boolean signedUpStudentsTooBig = course != null && updatedEvent.getSignedUpStudents() != null &&
+                updatedEvent.getSignedUpStudents().size() > course.getMaximumStudents();
+        boolean newStudentWouldMakeListTooBig = course != null && updatedEvent.getSignedUpStudents() != null
+                && !oldEvent.getSignedUpStudents().contains(tokenAndRole[2])
+                && oldEvent.getSignedUpStudents().size() == course.getMaximumStudents();
 
         // if client is a student, sign him up with his cn
         if (tokenAndRole[1].equals("student")) {
-            // If the signed up would make the list bigger than maximum students return 400
-            if (!oldEvent.getSignedUpStudents().contains(tokenAndRole[2])
-                    && oldEvent.getSignedUpStudents().size() == oldCourse.getMaximumStudents()) {
+            if (newStudentWouldMakeListTooBig) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .header("Authorization", "Bearer " + tokenAndRole[0])
                         .build();
@@ -220,17 +234,12 @@ public class EventService {
             }
         // not student: Update the event
         } else {
-            // If start/endTimes are wrong or
-            // the signedUpStudents list is bigger than the maximumStudents return 400
-            if (courseDatabase.isNotInDatabase(updatedEvent.getCourseId()) ||
-                    eventDatabase.startIsAfterEndOrWrongFormat(updatedEvent.getStartTime(), updatedEvent.getEndTime())
-                    || ((updatedEvent.getSignedUpStudents() != null && updatedEvent.getSignedUpStudents().size() >
-                    oldCourse.getMaximumStudents()))) {
+            if (courseDoesNotExistOrNoCourseIsGiven || noInputGiven || deliberateWrongTimesGiven
+                    || signedUpStudentsTooBig || newStudentWouldMakeListTooBig) {
                 return Response.status(Response.Status.BAD_REQUEST)
                         .header("Authorization", "Bearer " + tokenAndRole[0])
                         .build();
             }
-
             // Update the event in the database
             eventDatabase.update(updatedEvent, eventId);
         }

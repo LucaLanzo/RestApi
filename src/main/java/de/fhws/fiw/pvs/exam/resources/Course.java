@@ -76,7 +76,7 @@ public class Course {
         this.maximumStudents = maximumStudents;
     }
 
-    // Getter: Link to events
+    // Get the link to events
     @JsonConverter(ServerLinkConverter.class)
     public Link getEvents() {
         return allEvents;

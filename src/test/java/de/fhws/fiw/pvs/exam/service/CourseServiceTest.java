@@ -209,7 +209,7 @@ public class CourseServiceTest {
     @Order(6)
     public void getAllEventsFromSpecificCourseTest() {
         try {
-            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--18:00:00");
+            testEvent = new Event("2020-07-18--18:00:00", "2020-07-18--19:00:00");
             testEvent.setCourseId(testCourse.getHashId());
 
             eventDatabase.insertInto(testEvent);

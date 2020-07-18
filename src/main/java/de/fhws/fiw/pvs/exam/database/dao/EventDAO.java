@@ -43,4 +43,6 @@ public interface EventDAO {
     boolean isNotInDatabase(String eventId);
     // Check the start- and endTime if they are not in the proper format.
     boolean startIsAfterEndOrWrongFormat(String startTime, String endTime);
+    // Check if start- or endTime is wrong
+    boolean timeInWrongFormat(String startTime, String endTime);
 }

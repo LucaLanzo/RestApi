@@ -78,13 +78,8 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                courseDatabase.delete(testCourse.getHashId());
-                fail("Response code should have been 400");
-            } else {
-                courseDatabase.delete(testCourse.getHashId());
-                assertEquals(400, response.code());
-            }
+            courseDatabase.delete(testCourse.getHashId());
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -109,13 +104,8 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                courseDatabase.delete(testCourse.getHashId());
-                fail("Response code should have been 400");
-            } else {
-                courseDatabase.delete(testCourse.getHashId());
-                assertEquals(400, response.code());
-            }
+            courseDatabase.delete(testCourse.getHashId());
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -140,13 +130,8 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                courseDatabase.delete(testCourse.getHashId());
-                fail("Response code should have been 400");
-            } else {
-                courseDatabase.delete(testCourse.getHashId());
-                assertEquals(400, response.code());
-            }
+            courseDatabase.delete(testCourse.getHashId());
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No location header has been sent by the server.");
         } catch (IOException e) {
@@ -168,11 +153,7 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -194,11 +175,7 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server");
         } catch (IOException e) {
@@ -225,11 +202,7 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -254,11 +227,7 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if(response.code() != 400) {
-                fail("Response code should have been 400");
-            } else {
-                assertEquals(400, response.code());
-            }
+            assertEquals(400, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -284,13 +253,8 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                courseDatabase.delete(testCourse.getHashId());
-                fail("Response code should have been 404");
-            } else {
-                courseDatabase.delete(testCourse.getHashId());
-                assertEquals(404, response.code());
-            }
+            courseDatabase.delete(testCourse.getHashId());
+            assertEquals(404, response.code());
         } catch (NullPointerException e) {
             fail("No response body has been sent by the server.");
         } catch (IOException e) {
@@ -312,11 +276,7 @@ public class CourseServiceExceptionTest {
 
             Response response = client.newCall(request).execute();
 
-            if (response.code() != 404) {
-                fail("Response code should have been 404");
-            } else {
-                assertEquals(404, response.code());
-            }
+            assertEquals(404, response.code());
         } catch (IOException e) {
             fail("Call to the Server couldn't be made. Is the server not running?");
         }
