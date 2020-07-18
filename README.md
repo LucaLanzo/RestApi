@@ -43,8 +43,8 @@ __To POST an event ressource:__
 {
     "startTime":"2020-07-18--18:00:00",
     "endTime":"2020-07-18--20:00:00",
-    "courseId":"5f0b776b1b0edf0238c0f502",
-    "signedUpStudents":["k1111", "k22222"]
+    "courseId":"5f0b776b1b0edf0238c0f502", // KursId muss existieren und Kurs muss vorher angelegt sein.
+    "signedUpStudents":["k11111", "k22222"]
 }
 ```
 \
