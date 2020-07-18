@@ -219,7 +219,7 @@ public class EventService {
                 updatedEvent.getEndTime());
         boolean signedUpStudentsTooBig = course != null && updatedEvent.getSignedUpStudents() != null &&
                 updatedEvent.getSignedUpStudents().size() > course.getMaximumStudents();
-        boolean newStudentWouldMakeListTooBig = course != null && updatedEvent.getSignedUpStudents() != null
+        boolean newStudentWouldMakeListTooBig = course != null
                 && !oldEvent.getSignedUpStudents().contains(tokenAndRole[2])
                 && oldEvent.getSignedUpStudents().size() == course.getMaximumStudents();
 
