@@ -19,22 +19,6 @@ public class Authorization {
     private final static String BASE_URL = "https://api.fiw.fhws.de/auth/api/users/me";
 
     public static String[] authorizeUser(String authBody) throws IOException {
-        // TODO: THESE ARE HARDCODED ADMIN CREDS (DELETE WHEN IN PRODUCTION)
-        // Username: admin, password: admin
-        if (authBody.equals("Basic YWRtaW46YWRtaW4=")) {
-            return new String[]{("ADMIN CREDS PLEASE DELETE"), ("other"), ("")};
-        }
-        // TODO: THESE ARE HARDCODED STUDENT CREDS (DELETE WHEN IN PRODUCTION)
-        // Username: student, password: student
-        if (authBody.equals("Basic c3R1ZGVudDpzdHVkZW50")) {
-            return new String[]{("STUDENT CREDS PLEASE DELETE"), ("student"), ("k11111")};
-        }
-        // Username: student2, password: student2
-        if (authBody.equals("Basic c3R1ZGVudDI6c3R1ZGVudDI=")) {
-            return new String[]{("STUDENT CREDS PLEASE DELETE"), ("student"), ("k22222")};
-        }
-
-
         // Returns 401 and false if no creds have been transmitted
         if (authBody.equals("")) {
             return new String[]{("401"), ("other"), ("")};
