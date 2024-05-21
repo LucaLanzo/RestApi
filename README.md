@@ -12,7 +12,7 @@ After installing go to the directory of this project and type (-d flag to run da
 
 Default database username: admin\
 Default database password: adminpassword\
-Docker will create volume to keep the database saved under the docker volume name:\
+Docker will create a volume to keep the database saved under the docker volume name:\
 "pvsexamss2020restapi_mongoSoftSkillsDatabaseVolume"
 
 \
@@ -43,7 +43,7 @@ __To POST an event ressource:__
 {
     "startTime":"2020-07-18--18:00:00",
     "endTime":"2020-07-18--20:00:00",
-    "courseId":"5f0b776b1b0edf0238c0f502", // courseId has to exists and a course has to be POSTed beforehand
+    "courseId":"5f0b776b1b0edf0238c0f502", // courseId has to exist and a course has to be POSTed beforehand
     "signedUpStudents":["k11111", "k22222"]
 }
 ```
